@@ -81,6 +81,7 @@ function openModal(html, cls) {
 }
 function closeModal() { ++modalGen; $('modal').classList.remove('open'); $('modalBox').innerHTML = ''; }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modal').classList.contains('open')) { e.preventDefault(); closeModal(); } });
 window.appBack = function () { const m2 = $('modal2'); if (m2 && m2.classList.contains('open')) { m2.classList.remove('open'); return true; } if ($('modal').classList.contains('open')) { closeModal(); return true; } return false; };
 
 /** Scelta tra più opzioni: ritorna la chiave scelta o null. */
@@ -221,7 +222,7 @@ function showAppUpdBtn(a) {
   const brand = document.querySelector('header .brand'); if (!brand || !a || !a.newer || $('appUpdBtn')) return;
   const b = document.createElement('button'); b.type = 'button'; b.id = 'appUpdBtn'; b.className = 'app-upd-btn';
   b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Aggiorna app ' + esc(a.server);
-  b.onclick = () => { toast('Download dell\'aggiornamento…'); location.href = '/api/app/download'; };
+  b.onclick = () => { toast('Download dell\'aggiornamento…'); if (app && app.updateApp) app.updateApp('/api/app/download'); else location.href = '/api/app/download'; };
   brand.innerHTML = ''; brand.appendChild(b);
 }
 
@@ -421,5 +422,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.1.0' };
+window.Shell = { cfg: CFG, start, version: '0.1.1' };
 })();

@@ -610,7 +610,21 @@ function live() {
     es.onerror = () => { setLive(false); try { es.close(); } catch (e) {} es = null; setTimeout(connect, retry); retry = Math.min(retry * 2, 10000); };
   }
   connect();
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (!es) connect(); else refresh(); if (H.onVisible) try { H.onVisible(); } catch (e) {} } });
+  // controllo della versione anche senza il collegamento dal vivo: al rientro nell'app (Android a volte non avvisa la pagina)
+  // e ogni minuto. Server aggiornato → la pagina si ricarica da sola.
+  let lastCheck = 0;
+  const checkVersion = async () => {
+    if (Date.now() - lastCheck < 5000) return; lastCheck = Date.now();
+    try { const v = (await (await fetch('/api/version', { cache: 'no-store', credentials: 'same-origin' })).json()).version;
+      if (v && window.__srvVer && v !== window.__srvVer) { toast(CFG.name + ' aggiornato: ricarico…'); setTimeout(() => location.reload(), 600); }
+      else if (v && !window.__srvVer) window.__srvVer = v;
+    } catch (e) {}
+  };
+  setInterval(() => { if (!document.hidden) checkVersion(); }, 60000);
+  window.addEventListener('focus', checkVersion);
+  window.addEventListener('pageshow', checkVersion);
+  window.appResumed = () => { checkVersion(); retry = 1000; if (!es) connect(); };   // chiamabile dall'app Android al rientro
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkVersion(); retry = 1000; if (!es) connect(); else refresh(); if (H.onVisible) try { H.onVisible(); } catch (e) {} } });
   // finita la modifica (modale chiusa / campo lasciato): se nel frattempo è cambiato qualcosa, ridisegno
   document.addEventListener('focusout', () => { if (pending) refresh(); });
   const mo = new MutationObserver(() => { if (pending && !anyModal()) refresh(); });
@@ -637,5 +651,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.4' };
+window.Shell = { cfg: CFG, start, version: '0.5.5' };
 })();

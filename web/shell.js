@@ -34,7 +34,20 @@ const app = window.AndroidApp;
 const S = { settings: null, view: CFG.home };
 
 // ---------------------------------------------------------------- api
-let apiFails = 0;
+let apiFails = 0, lostTimer = null;
+/** Il server non risponde: di solito si sta riavviando (aggiornamento). Aspetto in silenzio che torni, provando ogni 1,5 s;
+ *  solo se dopo 45 s è ancora giù lo dico all'app (che mostra la schermata del server). */
+function serverLost() {
+  if (lostTimer) return;
+  setLive(false);
+  const t0 = Date.now();
+  const probe = async () => {
+    try { const r = await fetch('/api/version', { cache: 'no-store', credentials: 'same-origin' }); if (r.ok) { lostTimer = null; apiFails = 0; setLive(true); return; } } catch (e) {}
+    if (Date.now() - t0 > 45000) { lostTimer = null; if (app && app.connectionLost) try { app.connectionLost(); } catch (_) {} return; }
+    lostTimer = setTimeout(probe, 1500);
+  };
+  lostTimer = setTimeout(probe, 1500);
+}
 async function api(method, path, body, raw) {
   let res;
   try {
@@ -45,12 +58,12 @@ async function api(method, path, body, raw) {
   } catch (e) {
     setLive(false);
     // un solo errore (rete che cambia, app appena tornata in primo piano) non basta: schermata "server non raggiungibile" solo al secondo di fila
-    if (++apiFails >= 2 && app && app.connectionLost) try { app.connectionLost(); } catch (_) {}
+    if (++apiFails >= 2) serverLost();
     throw new Error('Server non raggiungibile');
   }
   apiFails = 0;
   if (res.status === 401) { location.href = '/login'; throw new Error('sessione scaduta'); }
-  if (res.status >= 500 && app && app.connectionLost) try { app.connectionLost(); } catch (_) {}
+  if (res.status === 502 || res.status === 503 || res.status === 504) serverLost();   // proxy davanti al server che si riavvia
   setLive(true);
   if (raw) return res;
   let j = null;
@@ -689,5 +702,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.9' };
+window.Shell = { cfg: CFG, start, version: '0.5.10' };
 })();

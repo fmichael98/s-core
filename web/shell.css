@@ -243,3 +243,15 @@ html.ptr-on,html.ptr-on body{overscroll-behavior-y:contain}
 .udrop button:hover,.udrop a:hover{background:var(--panel2)}
 .udrop form{margin:0;border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
 .udrop form button{color:var(--bad)}
+
+/* gruppo apribile (elenchi per anno, per ciclo…): testata cliccabile, corpo mostrato solo se .open */
+.grp{padding:0;overflow:hidden}
+.grp-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
+.grp-head:hover{background:var(--panel2)}
+.grp-head b{font-size:14px}
+.grp-head .chev{color:var(--mute);font-size:18px;line-height:1;transition:transform .15s;display:inline-block}
+.grp.open .grp-head .chev{transform:rotate(90deg)}
+.grp-head .tot{font-size:12.5px;white-space:nowrap;color:var(--mute)}
+.grp-body{display:none;padding:0 16px 10px}
+.grp.open .grp-body{display:flex;flex-direction:column}
+@media (max-width:640px){ .grp-head{padding:11px 12px} .grp-body{padding:0 12px 8px} }

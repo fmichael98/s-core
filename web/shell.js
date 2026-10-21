@@ -277,8 +277,8 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
   const drop = document.createElement('div'); drop.className = 'udrop'; drop.id = 'uDrop'; drop.setAttribute('role', 'menu'); drop.hidden = true;
   drop.innerHTML = `<div class="uhead"><span class="uav lg" id="uAv2">?</span><div class="uwho"><b id="uName2">—</b><small>${esc(CFG.name)}</small></div></div>
     <div class="usep"></div>
-    <div class="urow"><span class="ulbl">${svg(IC.moon)}Tema</span><div class="useg" id="uTheme" role="group" aria-label="Tema">
-      <button type="button" data-t="dark" aria-label="Scuro">${svg(IC.moon, 'ic sm')}</button><button type="button" data-t="light" aria-label="Chiaro">${svg(IC.sun, 'ic sm')}</button></div></div>
+    <button type="button" class="urow" id="uThemeRow" role="menuitemcheckbox"><span class="ulbl">${svg(IC.moon)}Tema</span><span class="useg" id="uTheme" aria-hidden="true">
+      <span data-t="dark">${svg(IC.moon, 'ic sm')}</span><span data-t="light">${svg(IC.sun, 'ic sm')}</span></span></button>
     <a role="menuitem" class="uitem" href="/password">${svg(IC.key)}Cambia password</a>
     <button role="menuitem" type="button" class="uitem" id="uServer" hidden>${svg(IC.server)}Cambia server</button>
     <div class="usep"></div>
@@ -286,7 +286,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
   document.body.appendChild(drop);
   const btn = $('uBtn');
   const theme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  const showTheme = () => drop.querySelectorAll('#uTheme button').forEach(b => b.classList.toggle('on', b.dataset.t === theme()));
+  const showTheme = () => { drop.querySelectorAll('#uTheme [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === theme())); $('uThemeRow').setAttribute('aria-checked', String(theme() === 'dark')); };
   const setTheme = t => {
     if (t === 'light') document.documentElement.setAttribute('data-theme', 'light'); else document.documentElement.removeAttribute('data-theme');
     try { localStorage.setItem('theme', t); } catch (e) {}
@@ -317,12 +317,12 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
   window.addEventListener('scroll', () => { if (userMenuOpen()) place(); }, { passive: true });
   // tastiera: frecce tra le voci, Esc chiude (vedi closeTop)
   drop.addEventListener('keydown', e => {
-    const items = [...drop.querySelectorAll('.uitem:not([hidden]), #uTheme button')];
+    const items = [...drop.querySelectorAll('#uThemeRow, .uitem:not([hidden])')];
     const i = items.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
     if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   });
-  drop.querySelectorAll('#uTheme button').forEach(b => b.onclick = e => { e.stopPropagation(); setTheme(b.dataset.t); });
+  $('uThemeRow').onclick = e => { e.stopPropagation(); setTheme(theme() === 'light' ? 'dark' : 'light'); };
   if (app && app.changeServer) { $('uServer').hidden = false; $('uServer').onclick = () => { close(); app.changeServer(); }; }
   window.setUserMenu = name => {
     if (!name) return; const ini = name.slice(0, 1).toUpperCase();
@@ -526,5 +526,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.0' };
+window.Shell = { cfg: CFG, start, version: '0.5.1' };
 })();

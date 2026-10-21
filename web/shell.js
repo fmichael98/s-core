@@ -213,8 +213,8 @@ function xselLabel(sel) {
 function xselSync(sel) { const b = sel._xbtn; if (b) { b.querySelector('.xsel-v').textContent = xselLabel(sel) || '—'; b.disabled = sel.disabled; } }
 function xselOpen(sel) {
   xselClose();
-  const btn = sel._xbtn, mobile = document.documentElement.clientWidth <= 640;
-  const pop = document.createElement('div'); pop.className = 'xsel-pop' + (mobile ? ' sheet' : ''); pop.setAttribute('role', 'listbox');
+  const btn = sel._xbtn, mobile = false, touch = document.documentElement.clientWidth <= 640;   // sempre a tendina sotto il tasto (niente pannello dal basso)
+  const pop = document.createElement('div'); pop.className = 'xsel-pop' + (mobile ? ' sheet' : '') + (touch ? ' touch' : ''); pop.setAttribute('role', 'listbox');
   const lbl = (sel.closest('div, label') && sel.closest('div, label').querySelector('label')) ? sel.closest('div, label').querySelector('label').textContent.trim() : '';
   let html = mobile && lbl ? `<div class="xsel-title">${esc(lbl)}</div>` : '';
   html += '<div class="xsel-list">';
@@ -231,7 +231,7 @@ function xselOpen(sel) {
   document.body.appendChild(pop);
   if (!mobile) {
     const r = btn.getBoundingClientRect(), vh = window.innerHeight;
-    pop.style.minWidth = r.width + 'px'; pop.style.left = Math.min(r.left, document.documentElement.clientWidth - Math.max(r.width, pop.offsetWidth) - 8) + 'px';
+    pop.style.minWidth = r.width + 'px'; pop.style.left = Math.max(8, Math.min(r.left, document.documentElement.clientWidth - Math.max(r.width, pop.offsetWidth) - 8)) + 'px';
     const below = vh - r.bottom - 12, above = r.top - 12;
     if (below >= Math.min(pop.offsetHeight, 260) || below >= above) { pop.style.top = (r.bottom + 6) + 'px'; pop.style.maxHeight = Math.max(160, below) + 'px'; }
     else { pop.style.bottom = (vh - r.top + 6) + 'px'; pop.style.maxHeight = Math.max(160, above) + 'px'; pop.classList.add('up'); }
@@ -651,5 +651,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.5' };
+window.Shell = { cfg: CFG, start, version: '0.5.6' };
 })();

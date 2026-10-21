@@ -196,6 +196,18 @@ function tapFast(el) {
 const views = {};
 const viewCache = {};   // ultimo HTML di ogni sezione (già riempito): lo swipe mostra subito quello
 const scrollPos = {};   // posizione di scorrimento di ogni sezione: si torna dov'eri
+const dirty = {};       // sezioni la cui copia è vecchia (il server ha segnalato dati cambiati): si rifanno in sottofondo
+let prefetching = false;
+/** Rifà in sottofondo le copie delle sezioni non a schermo rimaste indietro, una alla volta, senza toccare la pagina. */
+async function prefetchDirty() {
+  if (prefetching) return; prefetching = true;
+  try {
+    for (const v of Object.keys(views)) {
+      if (v === S.view || !dirty[v] || views[v].static) continue;
+      try { const h = await views[v](0); if (typeof h === 'string') viewCache[v] = h; dirty[v] = false; } catch (e) {}
+    }
+  } finally { prefetching = false; }
+}
 let skipNextRender = false;
 let swipeHash = false;  // cambio di #sezione fatto dallo swipe: non chiude una finestra appena aperta (es. il + toccato subito dopo)
 let renderGen = 0, lastRender = Promise.resolve();
@@ -302,10 +314,10 @@ function gestures() {
     const v = view(); const main = v.parentElement;
     side = document.createElement('div'); side.className = 'snap'; sideView = name; sideDir = dir;
     side.style.cssText = `position:absolute;left:0;right:0;top:0;transform:translateX(${dir * W()}px);transition:none;pointer-events:none;min-height:60vh`;
-    if (viewCache[name]) side.innerHTML = viewCache[name];   // subito l'ultima versione vista…
+    if (viewCache[name]) side.innerHTML = viewCache[name];   // la copia salvata: è quella che si vede scorrere
     main.appendChild(side);
-    if (views[name].static && viewCache[name]) return;      // sezione che si riempie in after(): la copia già disegnata basta
-    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { if (!views[name].static) viewCache[name] = html; if (side && sideView === name) side.innerHTML = html; } })   // …poi quella fresca
+    if (viewCache[name] && (views[name].static || !dirty[name])) return;   // copia buona: niente richieste durante il gesto
+    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { if (!views[name].static) { viewCache[name] = html; dirty[name] = false; } if (side && sideView === name) side.innerHTML = html; } })   // copia mancante o vecchia: la prendo ora
       .catch(e => { if (side && sideView === name && !viewCache[name]) side.innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; });
   };
   window.addEventListener('touchstart', e => {
@@ -363,7 +375,9 @@ function gestures() {
       busy = true; el.classList.add('spin'); set(GO, true);
       (async () => {
         const t0 = Date.now(); let err = null;
+        Object.keys(viewCache).forEach(v => { if (v !== S.view) dirty[v] = true; });
         try { if (H.onPull) await H.onPull(); await H.load(); await render(); } catch (e) { err = e; }
+        setTimeout(prefetchDirty, 300);
         await new Promise(r => setTimeout(r, Math.max(0, 600 - (Date.now() - t0))));
         el.classList.remove('spin');
         el.innerHTML = err ? ICON_X : ICON_OK; el.classList.add(err ? 'err' : 'done');
@@ -421,7 +435,9 @@ function live() {
     timer = setTimeout(async () => {
       if (editing()) { pending = true; return; }   // non interrompo chi sta scrivendo: aggiorno dopo
       pending = false;
+      Object.keys(viewCache).forEach(v => { if (v !== S.view) dirty[v] = true; });
       try { await H.load(); await render(); } catch (e) {}
+      setTimeout(prefetchDirty, 300);
     }, 200);
   };
   function connect() {
@@ -461,5 +477,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.4.0' };
+window.Shell = { cfg: CFG, start, version: '0.4.1' };
 })();

@@ -227,6 +227,13 @@ function navigate() {
   render().then(() => { if (changed) window.scrollTo(0, scrollPos[S.view] || 0); });
 }
 window.addEventListener('hashchange', () => { if (!swipeHash) closeModal(); swipeHash = false; navigate(); });
+// passare da una sezione all'altra (pillole in alto, link interni "#sezione") sostituisce l'indirizzo invece di aggiungerne uno:
+// Indietro (browser o app) non ripercorre le sezioni, chiude le finestre o esce
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a || e.defaultPrevented || e.ctrlKey || e.metaKey) return;
+  const h = a.getAttribute('href'); if (h.length < 2) return;
+  e.preventDefault(); if (location.hash !== h) location.replace(h);
+});
 function render() { lastRender = renderNow(); return lastRender; }
 async function renderNow() {
   const gen = ++renderGen;
@@ -465,7 +472,7 @@ function gestures() {
         viewCache[name] = v.innerHTML;
         window.scrollTo(0, scrollPos[name] || 0);
         if (location.hash === '#' + name) navigate();
-        else { skipNextRender = true; swipeHash = true; location.hash = '#' + name; setTimeout(() => { skipNextRender = false; swipeHash = false; }, 300); }
+        else { skipNextRender = true; swipeHash = true; location.replace('#' + name); setTimeout(() => { skipNextRender = false; swipeHash = false; }, 300); }   // replace: lo swipe non lascia tracce nella cronologia
       } finally { busy = false; }
     };
     pendingCommit = commit;
@@ -526,5 +533,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.1' };
+window.Shell = { cfg: CFG, start, version: '0.5.2' };
 })();

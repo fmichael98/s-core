@@ -24,6 +24,7 @@ use axum::{
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const SHELL_JS: &str = include_str!("../web/shell.js");
 pub const SHELL_CSS: &str = include_str!("../web/shell.css");
+pub const PAGE_JS: &str = include_str!("../web/page.js");
 
 fn asset(body: &'static str, mime: &'static str) -> Response {
     (
@@ -41,6 +42,7 @@ pub fn routes<S: Clone + Send + Sync + 'static>() -> Router<S> {
     Router::new()
         .route("/shell.js", get(|| async { asset(SHELL_JS, "application/javascript; charset=utf-8") }))
         .route("/shell.css", get(|| async { asset(SHELL_CSS, "text/css; charset=utf-8") }))
+        .route("/page.js", get(|| async { asset(PAGE_JS, "application/javascript; charset=utf-8") }))
 }
 
 /// Il blocco `<head>`/`<script>` da mettere nella pagina: fogli di stile e script del guscio con la versione per la cache.

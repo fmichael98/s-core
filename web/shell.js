@@ -264,7 +264,10 @@ function showAppUpdBtn(a) {
 function gestures() {
   if (!('ontouchstart' in window)) return;
   document.documentElement.classList.add('ptr-on');           // niente "ricarica" nativo del browser: lo faccio io
-  const el = document.createElement('div'); el.id = 'ptr'; el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>'; document.body.appendChild(el);
+  const ICON_PTR = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>';
+  const ICON_OK = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const ICON_X = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const el = document.createElement('div'); el.id = 'ptr'; el.innerHTML = ICON_PTR; document.body.appendChild(el);
   const MAX = 90, GO = 64;
   const view = () => $('view');
   let x0 = null, y0 = null, t0 = 0, mode = null, d = 0, dx = 0, busy = false;
@@ -272,7 +275,7 @@ function gestures() {
   // pagina "a fianco": la sezione verso cui si sta andando, già disegnata accanto a quella attuale
   let side = null, sideView = null, sideDir = 0;
   const order = () => [...document.querySelectorAll('nav a')].map(a => a.dataset.v);
-  const set = (h, anim) => { el.style.transition = anim ? 'transform .2s, opacity .2s' : 'none'; el.style.transform = `translate(-50%, ${h - 50}px) rotate(${h * 4}deg)`; el.style.opacity = Math.min(1, h / GO); el.classList.toggle('ready', h >= GO); };
+  const set = (h, anim) => { el.style.transition = anim ? 'transform .2s, opacity .2s' : 'none'; el.style.transform = `translate(-50%, ${h - 50}px) rotate(${h >= GO ? 0 : h * 4}deg)`; el.style.opacity = Math.min(1, h / GO); el.classList.toggle('ready', h >= GO); };
   const W = () => document.documentElement.clientWidth;
   const place = (x, anim) => {
     const v = view(); const tr = anim ? 'transform .2s cubic-bezier(.2,.7,.3,1)' : 'none';
@@ -339,10 +342,18 @@ function gestures() {
     x0 = null;
     if (mode === 'pull') {
       if (d < GO) { set(0, true); d = 0; return; }
+      // rilasciato oltre la soglia: la bolla si ferma, gira almeno 0,6 s, mostra ✓ per 0,5 s e poi se ne va
       busy = true; el.classList.add('spin'); set(GO, true);
       (async () => {
-        try { if (H.onPull) await H.onPull(); await H.load(); await render(); toast('Aggiornato'); } catch (e) { toast(e.message, true); }
-        el.classList.remove('spin'); set(0, true); busy = false; d = 0;
+        const t0 = Date.now(); let err = null;
+        try { if (H.onPull) await H.onPull(); await H.load(); await render(); } catch (e) { err = e; }
+        await new Promise(r => setTimeout(r, Math.max(0, 600 - (Date.now() - t0))));
+        el.classList.remove('spin');
+        el.innerHTML = err ? ICON_X : ICON_OK; el.classList.add(err ? 'err' : 'done');
+        if (err) toast(err.message, true);
+        await new Promise(r => setTimeout(r, 500));
+        set(0, true); busy = false; d = 0;
+        setTimeout(() => { el.classList.remove('done', 'err'); el.innerHTML = ICON_PTR; }, 250);
       })();
       return;
     }
@@ -433,5 +444,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.3.0' };
+window.Shell = { cfg: CFG, start, version: '0.3.1' };
 })();

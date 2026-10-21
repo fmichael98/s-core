@@ -213,6 +213,8 @@ html.ptr-on,html.ptr-on body{overscroll-behavior-y:contain}
 #ptr svg{display:block}
 #ptr.ready{color:var(--acc);border-color:var(--acc)}
 #ptr.spin svg{animation:ptrspin .8s linear infinite;color:var(--acc)}
+#ptr.done{color:var(--acc-ink,#fff);background:var(--acc);border-color:var(--acc)}
+#ptr.err{color:#fff;background:var(--bad);border-color:var(--bad)}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 
 /* aggiornamento dell'app disponibile: pulsante in alto al posto del nome */

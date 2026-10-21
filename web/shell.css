@@ -204,8 +204,8 @@ pre.log{background:var(--logbg);border:1px solid var(--line);border-radius:8px;p
 a.btn{text-decoration:none;display:inline-block;color:var(--text)}
 
 #view{will-change:transform}
-.pages .snap{display:grid;gap:16px;padding:18px 16px;max-width:1200px;margin:0 auto;box-sizing:border-box}
-@media (max-width:640px){ .pages .snap{gap:12px;padding:14px 12px} }
+/* la pagina "a fianco" durante lo swipe è un <main> come la sezione vera: prende gli stessi stili da main */
+.pages .snap{box-sizing:border-box}
 @media (max-width:640px){ .tiles{grid-template-columns:repeat(2,minmax(0,1fr))} .tiles > .tile:nth-child(3):last-child{grid-column:1/-1} }
 
 /* trascina in giù per aggiornare */
@@ -231,23 +231,41 @@ html.ptr-on,html.ptr-on body{overscroll-behavior-y:none}   /* niente "stretch" n
 :root[data-theme=light] .modal{background:rgba(0,0,0,.35)}
 
 /* utente in alto a destra: menu a tendina */
-.umenu{position:relative}
-.ubtn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 4px 0 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);cursor:pointer}
+.umenu{position:relative;display:flex}
+/* pulsante: solo avatar (da PC anche il nome), nessun bordo; alone leggero al passaggio e quando è aperto */
+.ubtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:2px;border:0;border-radius:999px;background:none;color:var(--text);cursor:pointer;transition:background .15s}
 .ubtn:hover,.ubtn.open{background:var(--panel2)}
-.ubtn .chev{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--mute);transition:transform .15s}
-.ubtn.open .chev{transform:rotate(180deg)}
-.uav{width:26px;height:26px;border-radius:50%;background:var(--acc);color:var(--acc-ink,#fff);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
-/* da PC nella bolla c'è anche il nome utente; sul telefono solo l'iniziale */
-.ubtn .uname{font-size:13px;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 2px}
+.ubtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ubtn .uname{font-size:13.5px;font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:10px}
 @media (max-width:640px){ .ubtn .uname{display:none} }
-/* la tendina sta sempre sotto al pulsante: posizione fissa calcolata all'apertura */
-.udrop{position:fixed;text-align:right;width:max-content;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:50;display:grid}
+.uav{width:32px;height:32px;border-radius:50%;background:var(--acc);color:var(--acc-ink,#fff);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;box-shadow:0 0 0 2px var(--bg)}
+.ubtn.open .uav,.ubtn:hover .uav{box-shadow:0 0 0 2px var(--panel2),0 0 0 4px color-mix(in srgb,var(--acc) 45%,transparent)}
+.uav.lg{width:40px;height:40px;font-size:16px;box-shadow:none}
+/* tendina: scheda ancorata sotto al pulsante, entra con dissolvenza e un leggero ingrandimento */
+.udrop{position:fixed;width:256px;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px;
+  box-shadow:0 18px 50px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.25);z-index:50;display:flex;flex-direction:column;
+  opacity:0;transform:translateY(-4px) scale(.97);transform-origin:top right;transition:opacity .12s,transform .12s}
+.udrop.in{opacity:1;transform:none}
 .udrop[hidden]{display:none}
-.udrop > *{display:block}
-.udrop button,.udrop a{width:100%;text-align:right;background:none;border:0;color:var(--text);padding:9px 10px;border-radius:6px;cursor:pointer;font:400 13.5px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-decoration:none}
-.udrop button:hover,.udrop a:hover{background:var(--panel2)}
-.udrop form{margin:0;border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
-.udrop form button{color:var(--bad)}
+.uhead{display:flex;align-items:center;gap:12px;padding:10px 10px 8px}
+.uwho{display:flex;flex-direction:column;min-width:0}
+.uwho b{font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uwho small{font-size:12px;color:var(--mute)}
+.usep{height:1px;background:var(--line);margin:6px 4px}
+.udrop .ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--mute);flex:none}
+.udrop .ic.sm{width:15px;height:15px}
+.urow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 6px 10px}
+.ulbl{display:flex;align-items:center;gap:12px;font-size:14px}
+.useg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px}
+.useg button{display:grid;place-items:center;width:34px;height:26px;border:0;border-radius:999px;background:none;color:var(--mute);cursor:pointer}
+.useg button .ic{color:inherit}
+.useg button.on{background:var(--panel);color:var(--acc);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.uitem{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:none;color:var(--text);cursor:pointer;
+  font:400 14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-decoration:none;text-align:left}
+.uitem:hover,.uitem:focus-visible{background:var(--panel2);outline:none}
+.uitem.bad,.uitem.bad .ic{color:var(--bad)}
+.udrop form{margin:0}
+:root[data-theme=light] .udrop{box-shadow:0 18px 50px rgba(20,30,50,.18),0 2px 8px rgba(20,30,50,.08)}
 
 /* gruppo apribile (elenchi per anno, per ciclo…): testata cliccabile, corpo mostrato solo se .open */
 .grp{padding:0;overflow:hidden}

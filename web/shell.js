@@ -92,11 +92,12 @@ new MutationObserver(ms => ms.forEach(m => {
   else if (i >= 0) openStack.splice(i, 1);
 })).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
 function closeTop() {
+  if (userMenuOpen()) { closeUserMenu(true); return true; }
   const el = openStack[openStack.length - 1]; if (!el) return false;
   if (el.id === 'modal') closeModal(); else { el.classList.remove('open'); if (el.id === 'modal2') $('modalBox2').innerHTML = ''; }
   return true;
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && openStack.length) { e.preventDefault(); closeTop(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (openStack.length || userMenuOpen())) { e.preventDefault(); closeTop(); } });
 window.appBack = () => closeTop();
 
 /** Scelta tra più opzioni: ritorna la chiave scelta o null. */
@@ -217,7 +218,7 @@ function navigate() {
   const prev = S.view;
   S.view = views[v] ? v : CFG.home;
   const changed = prev !== S.view;
-  if (changed) scrollPos[prev] = window.scrollY;
+  if (changed) { scrollPos[prev] = window.scrollY; const cur = $('view'); if (cur && cur.innerHTML && !cur.style.transform) viewCache[prev] = cur.innerHTML; }   // la sezione che lascio, così com'è (gruppi aperti…)
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === S.view));
   const on = document.querySelector('nav a.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   const fab = $('fab'); if (fab) fab.hidden = CFG.fab ? !CFG.fab.includes(S.view) : CFG.noFab.includes(S.view);
@@ -259,30 +260,74 @@ function showAppUpdBtn(a) {
 }
 
 // ---------------------------------------------------------------- utente in alto a destra: tema, password, server, esci
+// Pulsante = avatar (da PC anche il nome); la tendina è una scheda con intestazione, tema a interruttore e voci con icona.
+// Il guscio costruisce tutto da solo dentro .umenu: le app non devono avere markup particolare.
+const IC = {
+  key: '<path d="M15 7a3 3 0 1 1-3.6 2.9L4 17.3V20h2.7l1-1V17.5h1.5V16h1.6l1.2-1.2A3 3 0 0 1 15 7z"/><circle cx="16" cy="8" r="1"/>',
+  server: '<rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/>',
+  out: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+};
+const svg = (p, c) => `<svg viewBox="0 0 24 24" class="${c || 'ic'}" aria-hidden="true">${p}</svg>`;
+let closeUserMenu = () => {}, userMenuOpen = () => false;
 (function () {
-  const btn = $('uBtn'), drop = $('uDrop'); if (!btn || !drop) return;
+  const box = document.querySelector('.umenu'); if (!box) return;
+  box.innerHTML = `<button type="button" class="ubtn" id="uBtn" aria-haspopup="menu" aria-expanded="false" title="Account"><span class="uname" id="uName"></span><span class="uav" id="uAv">?</span></button>`;
+  const drop = document.createElement('div'); drop.className = 'udrop'; drop.id = 'uDrop'; drop.setAttribute('role', 'menu'); drop.hidden = true;
+  drop.innerHTML = `<div class="uhead"><span class="uav lg" id="uAv2">?</span><div class="uwho"><b id="uName2">—</b><small>${esc(CFG.name)}</small></div></div>
+    <div class="usep"></div>
+    <div class="urow"><span class="ulbl">${svg(IC.moon)}Tema</span><div class="useg" id="uTheme" role="group" aria-label="Tema">
+      <button type="button" data-t="dark" aria-label="Scuro">${svg(IC.moon, 'ic sm')}</button><button type="button" data-t="light" aria-label="Chiaro">${svg(IC.sun, 'ic sm')}</button></div></div>
+    <a role="menuitem" class="uitem" href="/password">${svg(IC.key)}Cambia password</a>
+    <button role="menuitem" type="button" class="uitem" id="uServer" hidden>${svg(IC.server)}Cambia server</button>
+    <div class="usep"></div>
+    <form method="post" action="/logout"><button role="menuitem" type="submit" class="uitem bad">${svg(IC.out)}Esci</button></form>`;
+  document.body.appendChild(drop);
+  const btn = $('uBtn');
   const theme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const showTheme = () => drop.querySelectorAll('#uTheme button').forEach(b => b.classList.toggle('on', b.dataset.t === theme()));
   const setTheme = t => {
     if (t === 'light') document.documentElement.setAttribute('data-theme', 'light'); else document.documentElement.removeAttribute('data-theme');
     try { localStorage.setItem('theme', t); } catch (e) {}
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t === 'light' ? '#f3f5f8' : '#0d1014';
-    $('uTheme').textContent = t === 'light' ? 'chiaro' : 'scuro';
+    showTheme();
     if (H.onTheme) try { H.onTheme(t); } catch (e) {}
   };
-  $('uTheme').textContent = theme() === 'light' ? 'chiaro' : 'scuro';
-  const close = () => { drop.hidden = true; btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
-  const open = () => {
-    if (drop.parentElement !== document.body) document.body.appendChild(drop);   // fuori dalla barra: la posizione fissa è rispetto allo schermo
+  showTheme();
+  const place = () => {
     const r = btn.getBoundingClientRect();
-    drop.style.top = (r.bottom + 6) + 'px'; drop.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px'; drop.style.left = 'auto';
-    drop.hidden = false; btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    drop.style.top = (r.bottom + 8) + 'px'; drop.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px';
   };
-  btn.onclick = e => { e.stopPropagation(); if (drop.hidden) open(); else close(); };
-  window.addEventListener('resize', () => { if (!drop.hidden) close(); });
-  document.addEventListener('click', e => { if (!drop.hidden && !e.target.closest('.umenu, .udrop')) close(); });
-  drop.querySelector('[data-u=theme]').onclick = () => { setTheme(theme() === 'light' ? 'dark' : 'light'); };
-  if (app && app.changeServer && $('uServer')) { $('uServer').hidden = false; $('uServer').onclick = () => { close(); app.changeServer(); }; }
-  window.setUserMenu = name => { if (!name) return; $('uAv').textContent = name.slice(0, 1).toUpperCase(); const n = $('uName'); if (n) n.textContent = name; };
+  const close = (focusBtn) => {
+    if (drop.hidden) return;
+    drop.classList.remove('in'); btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+    setTimeout(() => { if (!drop.classList.contains('in')) drop.hidden = true; }, 120);
+    if (focusBtn) btn.focus();
+  };
+  const open = () => {
+    place(); drop.hidden = false; requestAnimationFrame(() => drop.classList.add('in'));
+    btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+  };
+  closeUserMenu = close; userMenuOpen = () => !drop.hidden && drop.classList.contains('in');
+  btn.onclick = e => { e.stopPropagation(); if (userMenuOpen()) close(); else open(); };
+  // chiusura: tocco/clic fuori, ridimensionamento, scorrimento della pagina
+  document.addEventListener('pointerdown', e => { if (userMenuOpen() && !e.target.closest('.udrop, #uBtn')) close(); }, true);
+  window.addEventListener('resize', () => close());
+  window.addEventListener('scroll', () => { if (userMenuOpen()) place(); }, { passive: true });
+  // tastiera: frecce tra le voci, Esc chiude (vedi closeTop)
+  drop.addEventListener('keydown', e => {
+    const items = [...drop.querySelectorAll('.uitem:not([hidden]), #uTheme button')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  });
+  drop.querySelectorAll('#uTheme button').forEach(b => b.onclick = e => { e.stopPropagation(); setTheme(b.dataset.t); });
+  if (app && app.changeServer) { $('uServer').hidden = false; $('uServer').onclick = () => { close(); app.changeServer(); }; }
+  window.setUserMenu = name => {
+    if (!name) return; const ini = name.slice(0, 1).toUpperCase();
+    $('uAv').textContent = ini; $('uAv2').textContent = ini; $('uName').textContent = name; $('uName2').textContent = name;
+  };
 })();
 
 // ---------------------------------------------------------------- gesti col dito: scorri a destra/sinistra = cambia sezione, trascina in giù = aggiorna
@@ -308,16 +353,20 @@ function gestures() {
     v.style.transition = tr; v.style.transform = x ? `translateX(${x}px)` : '';
     if (side) { side.style.transition = tr; side.style.transform = `translateX(${x + sideDir * W()}px)`; }
   };
-  const dropSide = () => { if (side) { side.remove(); side = null; sideView = null; sideDir = 0; } };
+  const fitPages = () => { if (!side) return; const pg = view().parentElement; pg.style.minHeight = Math.max(view().offsetHeight, side.offsetTop + side.offsetHeight) + 'px'; };
+  const dropSide = () => { if (side) { side.remove(); side = null; sideView = null; sideDir = 0; } const pg = view().parentElement; if (pg) pg.style.minHeight = ''; };
   const makeSide = (name, dir) => {
     dropSide();
-    const v = view(); const main = v.parentElement;
-    side = document.createElement('div'); side.className = 'snap'; sideView = name; sideDir = dir;
-    side.style.cssText = `position:absolute;left:0;right:0;top:0;transform:translateX(${dir * W()}px);transition:none;pointer-events:none;min-height:60vh`;
+    const v = view(); const pg = v.parentElement;
+    // stesso tipo di elemento e stesse classi della sezione vera: spaziature identiche
+    side = document.createElement(v.tagName); side.className = (v.className + ' snap').trim(); sideView = name; sideDir = dir;
+    // in alto quanto basta perché, a gesto finito, sia già dove la sezione verrà mostrata (al suo scorrimento salvato)
+    const top = window.scrollY - (scrollPos[name] || 0);
+    side.style.cssText = `position:absolute;left:0;right:0;top:${top}px;margin:0 auto;transform:translateX(${dir * W()}px);transition:none;pointer-events:none`;
     if (viewCache[name]) side.innerHTML = viewCache[name];   // la copia salvata: è quella che si vede scorrere
-    main.appendChild(side);
+    pg.appendChild(side); fitPages();
     if (viewCache[name] && (views[name].static || !dirty[name])) return;   // copia buona: niente richieste durante il gesto
-    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { if (!views[name].static) { viewCache[name] = html; dirty[name] = false; } if (side && sideView === name) side.innerHTML = html; } })   // copia mancante o vecchia: la prendo ora
+    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { if (!views[name].static) { viewCache[name] = html; dirty[name] = false; } if (side && sideView === name) { side.innerHTML = html; fitPages(); } } })   // copia mancante o vecchia: la prendo ora
       .catch(e => { if (side && sideView === name && !viewCache[name]) side.innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; });
   };
   window.addEventListener('touchstart', e => {
@@ -326,7 +375,6 @@ function gestures() {
     if (busy || e.touches.length !== 1 || anyModal()) return;
     const tch = e.touches[0];
     if (tch.target.closest('.udrop, .umenu')) return;   // tocco dentro il menu utente: è un clic sulle voci, non un gesto
-    const ud = $('uDrop'); if (ud && !ud.hidden) { ud.hidden = true; $('uBtn').classList.remove('open'); }   // menu aperto e tocco fuori: si chiude e il gesto prosegue
     if (tch.target.closest('nav, input[type=range], .xscroll')) return;   // barra delle sezioni, cursori e liste che scorrono di lato: tutto il resto si swipa (anche campi di testo e tendine)
     x0 = tch.clientX; y0 = tch.clientY; t0 = Date.now(); mode = null; d = 0; dx = 0;
   }, { passive: true });
@@ -408,6 +456,7 @@ function gestures() {
       pendingCommit = null;
       try {
         scrollPos[S.view] = window.scrollY;
+        viewCache[S.view] = v.innerHTML;   // la sezione che lascio, così com'è (gruppi aperti…)
         S.view = name; ++renderGen;
         v.style.transition = 'none'; v.style.transform = '';
         v.innerHTML = done.innerHTML;
@@ -477,5 +526,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.4.1' };
+window.Shell = { cfg: CFG, start, version: '0.5.0' };
 })();

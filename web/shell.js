@@ -257,13 +257,22 @@ function xselOpen(sel) {
 function xselEnhance(sel) {
   if (sel._xbtn || sel.multiple || sel.size > 1 || sel.closest('.xsel-skip')) return;
   const cs = getComputedStyle(sel);
-  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xsel-btn ' + sel.className; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
-  if (sel.id) btn.dataset.for = sel.id;
-  btn.innerHTML = '<span class="xsel-v"></span><svg class="xsel-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-  if (sel.getAttribute('style')) btn.setAttribute('style', sel.getAttribute('style'));
-  if (cs.flexGrow !== '0') btn.style.flexGrow = cs.flexGrow;
+  // HTML rimesso da una copia salvata (swipe, ritorno su una sezione): il pulsante c'è già accanto al select → lo riuso,
+  // e tolgo eventuali doppioni, invece di aggiungerne un altro a ogni passaggio
+  const stale = [];
+  for (let n = sel.nextElementSibling; n && n.classList.contains('xsel-btn') && !n._xsel; n = n.nextElementSibling) stale.push(n);
+  let btn = stale.shift() || null; stale.forEach(n => n.remove());
+  if (!btn) {
+    btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xsel-btn ' + sel.className.replace(/\bxsel-native\b/, '').trim(); btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
+    if (sel.id) btn.dataset.for = sel.id;
+    btn.innerHTML = '<span class="xsel-v"></span><svg class="xsel-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    if (sel.getAttribute('style')) btn.setAttribute('style', sel.getAttribute('style'));
+    if (cs.flexGrow !== '0') btn.style.flexGrow = cs.flexGrow;
+    sel.after(btn);
+  }
+  btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
   sel.classList.add('xsel-native'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
-  sel.after(btn); sel._xbtn = btn;
+  sel._xbtn = btn; btn._xsel = sel;
   // valore cambiato dal codice (sel.value = …, opzioni riscritte): il pulsante si aggiorna da solo
   const proto = HTMLSelectElement.prototype;
   for (const k of ['value', 'selectedIndex']) {
@@ -276,7 +285,10 @@ function xselEnhance(sel) {
   btn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xselOpen(sel); } });
   xselSync(sel);
 }
-function xselScan(root) { (root.matches && root.matches('select') ? [root] : [...(root.querySelectorAll ? root.querySelectorAll('select') : [])]).forEach(xselEnhance); }
+function xselScan(root) {
+  (root.matches && root.matches('select') ? [root] : [...(root.querySelectorAll ? root.querySelectorAll('select') : [])]).forEach(xselEnhance);
+  if (root.querySelectorAll) root.querySelectorAll('.xsel-btn').forEach(b => { if (!b._xsel) b.remove(); });   // orfani di copie vecchie
+}
 xselScan(document.body);
 new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && xselScan(n)))).observe(document.body, { childList: true, subtree: true });
 document.addEventListener('pointerdown', e => { if (xselCur && !e.target.closest('.xsel-pop') && e.target.closest('.xsel-btn') !== xselCur.btn) xselClose(); }, true);
@@ -625,5 +637,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.3' };
+window.Shell = { cfg: CFG, start, version: '0.5.4' };
 })();

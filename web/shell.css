@@ -81,7 +81,9 @@ a.kv:hover span:first-child{color:var(--acc)}
 .row .acts{display:flex;gap:4px;flex:none}
 .row.done{opacity:.55}
 /* righe cliccabili (si apre il dettaglio): tutta la riga reagisce */
-.row.click{cursor:pointer;border-radius:8px;margin:0 -8px;padding-left:8px;padding-right:8px;transition:background .12s}
+.row.click{position:relative;border-bottom:0;cursor:pointer;border-radius:8px;margin:0 -8px;padding-left:8px;padding-right:8px;transition:background .12s}
+.row.click::after{content:"";position:absolute;left:8px;right:8px;bottom:0;border-bottom:1px solid var(--line)}   /* separatore dritto (il bordo con gli angoli tondi si curvava) */
+.row.click:last-child::after{display:none}
 .row.click:hover{background:var(--panel2)}
 .row.click:active{background:var(--line)}
 @media (hover:hover){

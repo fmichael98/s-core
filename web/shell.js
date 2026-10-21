@@ -292,7 +292,7 @@ function gestures() {
     const tch = e.touches[0];
     if (tch.target.closest('.udrop, .umenu')) return;   // tocco dentro il menu utente: è un clic sulle voci, non un gesto
     const ud = $('uDrop'); if (ud && !ud.hidden) { ud.hidden = true; $('uBtn').classList.remove('open'); }   // menu aperto e tocco fuori: si chiude e il gesto prosegue
-    if (tch.target.closest('nav, input, textarea, select, .xscroll')) return;   // barra delle sezioni, campi e liste che scorrono di lato: tutto il resto si swipa
+    if (tch.target.closest('nav, input[type=range], .xscroll')) return;   // barra delle sezioni, cursori e liste che scorrono di lato: tutto il resto si swipa (anche campi di testo e tendine)
     x0 = tch.clientX; y0 = tch.clientY; t0 = Date.now(); mode = null; d = 0; dx = 0;
   }, { passive: true });
   window.addEventListener('touchmove', e => {
@@ -424,5 +424,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.2.0' };
+window.Shell = { cfg: CFG, start, version: '0.2.1' };
 })();

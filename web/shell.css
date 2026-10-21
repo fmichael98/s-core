@@ -38,7 +38,7 @@ main{max-width:1200px;margin:0 auto;padding:18px 16px;display:grid;gap:16px}
 /* contenitore delle sezioni: lo swipe muove solo quello che c'è qui dentro, mai la pagina */
 .pages{position:relative;overflow:hidden;width:100%}
 /* dentro le pagine lo scorrimento orizzontale col dito è sempre lo swipe tra sezioni (anche su grafici, tabelle, riquadri) */
-.pages *:not(input):not(textarea):not(select){touch-action:pan-y}
+.pages *:not(input[type=range]){touch-action:pan-y}
 /* …tranne le liste segnate .xscroll (es. porte di un servizio), che scorrono di lato col dito */
 .pages .xscroll,.pages .xscroll *{touch-action:pan-x pan-y}
 body{touch-action:pan-y pinch-zoom}

@@ -90,6 +90,7 @@ new MutationObserver(ms => ms.forEach(m => {
   const i = openStack.indexOf(el);
   if (el.classList.contains('open')) { if (i >= 0) openStack.splice(i, 1); openStack.push(el); }
   else if (i >= 0) openStack.splice(i, 1);
+  document.documentElement.classList.toggle('modal-on', openStack.length > 0);   // finestra aperta: la pagina sotto resta ferma
 })).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
 function closeTop() {
   if (xselClose()) return true;
@@ -348,13 +349,41 @@ document.addEventListener('click', e => {
   e.preventDefault(); if (location.hash !== h) location.replace(h);
 });
 function render() { lastRender = renderNow(); return lastRender; }
+/** Ridisegna la sezione lasciando al suo posto il campo in cui si sta scrivendo (stesso elemento: niente tastiera che si chiude,
+ *  niente tocchi che finiscono su altro). Cambia tutto il resto. false = struttura diversa, va ridisegnata da capo. */
+function patchKeeping(el, html, keep) {
+  const tpl = document.createElement('template'); tpl.innerHTML = html;
+  const neu = tpl.content.querySelector('#' + CSS.escape(keep.id)); if (!neu || neu.tagName !== keep.tagName) return false;
+  const oldChain = [], newChain = [];
+  for (let n = keep; n && n !== el; n = n.parentNode) oldChain.unshift(n);
+  for (let n = neu; n && n !== tpl.content; n = n.parentNode) newChain.unshift(n);
+  if (oldChain.length !== newChain.length || oldChain.some((o, i) => o.tagName !== newChain[i].tagName)) return false;
+  let pOld = el, pNew = tpl.content;
+  oldChain.forEach((o, i) => {
+    const n = newChain[i];
+    [...pOld.childNodes].forEach(c => { if (c !== o) c.remove(); });
+    const before = [], after = []; let seen = false;
+    [...pNew.childNodes].forEach(c => { if (c === n) seen = true; else (seen ? after : before).push(c); });
+    o.before(...before); o.after(...after);
+    if (o !== keep) {   // contenitori del campo: prendono classi e attributi nuovi
+      [...o.attributes].forEach(a => { if (!n.hasAttribute(a.name)) o.removeAttribute(a.name); });
+      [...n.attributes].forEach(a => o.setAttribute(a.name, a.value));
+    }
+    pOld = o; pNew = n;
+  });
+  return true;
+}
 async function renderNow() {
   const gen = ++renderGen;
   const el = $('view');
   try {
     const html = await views[S.view](gen);
     if (gen !== renderGen) return;
-    if (typeof html === 'string') el.innerHTML = html;
+    if (typeof html === 'string') {
+      const a = document.activeElement;
+      const keep = a && a.id && el.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|file|button|submit)$/.test(a.type))) ? a : null;
+      if (!keep || !patchKeeping(el, html, keep)) el.innerHTML = html;
+    }
     if (views[S.view].after) views[S.view].after();
     if (typeof html === 'string') viewCache[S.view] = el.innerHTML;
   } catch (e) {
@@ -660,5 +689,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.8' };
+window.Shell = { cfg: CFG, start, version: '0.5.9' };
 })();

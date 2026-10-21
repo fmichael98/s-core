@@ -325,3 +325,8 @@ select.xsel-native{position:absolute!important;width:1px!important;height:1px!im
 .xsel-pop.touch .xsel-o{padding:12px 14px;font-size:16px}
 .xsel-title{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;padding:2px 14px 8px}
 :root[data-theme=light] .xsel-pop{box-shadow:0 18px 50px rgba(20,30,50,.18),0 2px 8px rgba(20,30,50,.08)}
+/* finestra aperta: scorre solo la finestra, la pagina sotto resta ferma (anche col dito sullo sfondo scuro) */
+html.modal-on,html.modal-on body{overflow:hidden;overscroll-behavior:none}
+.modal{overscroll-behavior:contain;touch-action:none}
+.modal .box{overscroll-behavior:contain;touch-action:pan-y}
+.modal .box *{touch-action:pan-y}

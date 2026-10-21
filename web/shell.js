@@ -13,7 +13,7 @@
 (function () {
 'use strict';
 
-const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true }, window.SHELL || {});
+const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true, events: '/api/events' }, window.SHELL || {});
 const H = {};   // ganci dell'app (da Shell.start)
 const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen && H.modalOpen());   // finestra del guscio o finestre proprie dell'app
 
@@ -23,6 +23,22 @@ const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen &
   const scan = root => { off(root); root.querySelectorAll && root.querySelectorAll('input,textarea,form').forEach(off); };
   scan(document.body);
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && scan(n)))).observe(document.body, { childList: true, subtree: true });
+})();
+
+// animazioni continue (rotelline, pulsazioni): tutte agganciate allo stesso orologio della pagina, così quando
+// un aggiornamento ridisegna il pezzo l'animazione prosegue dal punto in cui era invece di ripartire da capo
+(function () {
+  if (!document.getAnimations) return;
+  let queued = false;
+  const sync = () => {
+    queued = false;
+    for (const a of document.getAnimations()) {
+      try { if (a.effect && a.effect.getComputedTiming().iterations === Infinity && a.startTime !== 0 && a.playState === 'running') a.startTime = 0; } catch (e) { /* animazione già finita */ }
+    }
+  };
+  const later = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };
+  new MutationObserver(later).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+  later();
 })();
 
 const $ = id => document.getElementById(id);
@@ -135,7 +151,7 @@ function formModal(title, fields, onSave, extra) {
   const html = fields.map(f => {
     if (f.type === 'hidden') return '';
     if (f.type === 'seg') return `<div class="full"><label>${esc(f.l)}</label><div class="seg" data-k="${f.k}" style="margin-top:6px;flex-wrap:wrap">${f.opts.map(o => `<button type="button" data-v="${esc(o.v)}" class="${o.v === f.v ? 'on ' + (o.c || '') : ''}">${esc(o.t)}</button>`).join('')}</div></div>`;
-    if (f.type === 'check') return `<div class="${f.full ? 'full' : ''}"><label class="chk"><input type="checkbox" name="${f.k}" ${f.v ? 'checked' : ''}> ${esc(f.l)}</label></div>`;
+    if (f.type === 'check') return `<div class="${f.full ? 'full' : ''}" data-f="${f.k}"><label class="chk"><input type="checkbox" name="${f.k}" ${f.v ? 'checked' : ''}> ${esc(f.l)}</label></div>`;
     let inp;
     if (f.type === 'select') inp = `<select name="${f.k}">${f.opts.map(o => `<option value="${esc(o.v)}" ${String(o.v) === String(f.v ?? '') ? 'selected' : ''}>${esc(o.t)}</option>`).join('')}</select>`;
     else if (f.type === 'textarea') inp = `<textarea name="${f.k}" rows="${f.rows || 2}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>${esc(f.v ?? '')}</textarea>`;
@@ -149,7 +165,7 @@ function formModal(title, fields, onSave, extra) {
     else if (f.type === 'datalist') inp = `<input name="${f.k}" type="text" value="${esc(f.v ?? '')}" list="dl_${f.k}" ${f.req ? 'required' : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}><datalist id="dl_${f.k}">${f.opts.map(o => `<option value="${esc(o)}">`).join('')}</datalist>`;
     else if (f.ro) inp = `<input name="${f.k}" type="text" value="${esc(f.v ?? '')}" readonly style="opacity:.7">`;
     else inp = `<input name="${f.k}" type="${f.type || 'text'}" value="${esc(f.v ?? '')}" ${f.req ? 'required' : ''} ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''} ${f.step ? `step="${f.step}"` : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''} ${f.type === 'number' ? 'inputmode="decimal"' : ''}>`;
-    return `<div class="${f.full ? 'full' : ''}"><label>${esc(f.l)}</label>${inp}${f.hint ? `<div class="hint">${f.hint}</div>` : ''}</div>`;
+    return `<div class="${f.full ? 'full' : ''}" data-f="${f.k}"><label>${esc(f.l)}</label>${inp}${f.hint ? `<div class="hint">${f.hint}</div>` : ''}</div>`;
   }).join('');
   openModal(`<h3>${esc(title)}</h3><form id="mf"><div class="fg">${html}</div><div class="msg bad" id="mmsg"></div>
     <div class="btns">${extra || ''}<button class="btn" type="button" id="mcancel">Annulla</button><button class="btn pri" type="submit">Salva</button></div></form>`);
@@ -653,7 +669,7 @@ function live() {
   };
   function connect() {
     if (es) { try { es.close(); } catch (e) {} }
-    es = new EventSource('/api/events');
+    es = new EventSource(CFG.events);   // flusso degli avvisi (SCalendar lo ha su /api/live: /api/events sono i suoi eventi)
     es.onopen = () => { setLive(true); retry = 1000; };
     es.addEventListener('version', e => { if (window.__srvVer && window.__srvVer !== e.data) { toast(CFG.name + ' aggiornato: ricarico…'); setTimeout(() => location.reload(), 600); return; } window.__srvVer = e.data; });
     es.addEventListener('hello', e => { if (last !== null && last !== e.data) refresh(); last = e.data; });   // tornato online: qualcosa può essere cambiato
@@ -702,5 +718,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.10' };
+window.Shell = { cfg: CFG, start, version: '0.5.11' };
 })();

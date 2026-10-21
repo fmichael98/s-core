@@ -308,6 +308,8 @@ function gestures() {
     if (x0 == null) return;
     const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
     if (!mode) {
+      // direzione non ancora decisa: a pagina in cima e dito verso il basso il browser non deve tirare la pagina (effetto "stretch" di Android)
+      if (my > 0 && window.scrollY <= 0 && e.cancelable) e.preventDefault();
       if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;   // decido la direzione dopo pochi pixel: lo swipe risponde subito
       if (Math.abs(mx) > Math.abs(my) * 0.8) {
         // orizzontale: non dal bordo estremo (lì resta il gesto "indietro" del telefono)
@@ -316,6 +318,7 @@ function gestures() {
     }
     if (mode === 'pull') {
       if (my <= 0 || window.scrollY > 0) { if (d) set(0, true); d = 0; return; }
+      if (e.cancelable) e.preventDefault();   // la bolla è la mia: niente stretch del browser
       d = Math.min(MAX, my * 0.5); set(d);
     } else if (mode === 'swipe') {
       const o = order(); let i = o.indexOf(S.view);
@@ -444,5 +447,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.3.2' };
+window.Shell = { cfg: CFG, start, version: '0.3.3' };
 })();

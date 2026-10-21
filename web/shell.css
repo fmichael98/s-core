@@ -207,7 +207,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--text)}
 @media (max-width:640px){ .tiles{grid-template-columns:repeat(2,minmax(0,1fr))} .tiles > .tile:nth-child(3):last-child{grid-column:1/-1} }
 
 /* trascina in giù per aggiornare */
-html.ptr-on,html.ptr-on body{overscroll-behavior-y:contain}
+html.ptr-on,html.ptr-on body{overscroll-behavior-y:none}   /* niente "stretch" né ricarica del browser: il trascinamento lo gestisce il guscio */
 #ptr{position:fixed;left:50%;top:104px;z-index:8;width:40px;height:40px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
   display:grid;place-items:center;color:var(--mute);opacity:0;transform:translate(-50%,-50px);pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 #ptr svg{display:block}

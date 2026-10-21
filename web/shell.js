@@ -210,7 +210,15 @@ function xselLabel(sel) {
   const o = sel.options[sel.selectedIndex];
   return o ? o.textContent : '';
 }
-function xselSync(sel) { const b = sel._xbtn; if (b) { b.querySelector('.xsel-v').textContent = xselLabel(sel) || '—'; b.disabled = sel.disabled; } }
+function xselSync(sel) {
+  const b = sel._xbtn; if (!b) return;
+  b.querySelector('.xsel-v').textContent = xselLabel(sel) || '—'; b.disabled = sel.disabled;
+  // larghezza fissa: il pulsante è largo quanto la voce più lunga, così non cambia misura scegliendo un'altra voce
+  const sz = b.querySelector('.xsel-sz'); if (!sz) return;
+  const labels = sel.options.length <= 80 ? [...sel.options].map(o => o.textContent) : [];
+  const key = labels.join('\n'); if (sz._k === key) return; sz._k = key;
+  sz.innerHTML = labels.map(t => `<i>${esc(t)}</i>`).join('');
+}
 function xselOpen(sel) {
   xselClose();
   const btn = sel._xbtn, mobile = false, touch = document.documentElement.clientWidth <= 640;   // sempre a tendina sotto il tasto (niente pannello dal basso)
@@ -261,11 +269,12 @@ function xselEnhance(sel) {
   // e tolgo eventuali doppioni, invece di aggiungerne un altro a ogni passaggio
   const stale = [];
   for (let n = sel.nextElementSibling; n && n.classList.contains('xsel-btn') && !n._xsel; n = n.nextElementSibling) stale.push(n);
+  if (stale[0] && !stale[0].querySelector('.xsel-sz')) stale.shift().remove();   // copia di una versione precedente: lo rifaccio
   let btn = stale.shift() || null; stale.forEach(n => n.remove());
   if (!btn) {
     btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xsel-btn ' + sel.className.replace(/\bxsel-native\b/, '').trim(); btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
     if (sel.id) btn.dataset.for = sel.id;
-    btn.innerHTML = '<span class="xsel-v"></span><svg class="xsel-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    btn.innerHTML = '<span class="xsel-box"><span class="xsel-v"></span><span class="xsel-sz" aria-hidden="true"></span></span><svg class="xsel-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     if (sel.getAttribute('style')) btn.setAttribute('style', sel.getAttribute('style'));
     if (cs.flexGrow !== '0') btn.style.flexGrow = cs.flexGrow;
     sel.after(btn);
@@ -651,5 +660,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.7' };
+window.Shell = { cfg: CFG, start, version: '0.5.8' };
 })();

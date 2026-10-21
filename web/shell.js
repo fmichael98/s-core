@@ -82,8 +82,22 @@ function openModal(html, cls) {
 }
 function closeModal() { ++modalGen; $('modal').classList.remove('open'); $('modalBox').innerHTML = ''; }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modal').classList.contains('open')) { e.preventDefault(); closeModal(); } });
-window.appBack = function () { const m2 = $('modal2'); if (m2 && m2.classList.contains('open')) { m2.classList.remove('open'); return true; } if ($('modal').classList.contains('open')) { closeModal(); return true; } return false; };
+// Finestre aperte (quella del guscio e quelle proprie dell'app: ogni .modal che prende la classe .open): Esc da PC e Indietro nell'app
+// chiudono sempre l'ultima aperta.
+const openStack = [];
+new MutationObserver(ms => ms.forEach(m => {
+  const el = m.target; if (!(el.classList && el.classList.contains('modal'))) return;
+  const i = openStack.indexOf(el);
+  if (el.classList.contains('open')) { if (i >= 0) openStack.splice(i, 1); openStack.push(el); }
+  else if (i >= 0) openStack.splice(i, 1);
+})).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+function closeTop() {
+  const el = openStack[openStack.length - 1]; if (!el) return false;
+  if (el.id === 'modal') closeModal(); else { el.classList.remove('open'); if (el.id === 'modal2') $('modalBox2').innerHTML = ''; }
+  return true;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && openStack.length) { e.preventDefault(); closeTop(); } });
+window.appBack = () => closeTop();
 
 /** Scelta tra più opzioni: ritorna la chiave scelta o null. */
 function choose(title, sub, options) {
@@ -256,7 +270,7 @@ function showAppUpdBtn(a) {
   document.addEventListener('click', e => { if (!drop.hidden && !e.target.closest('.umenu, .udrop')) close(); });
   drop.querySelector('[data-u=theme]').onclick = () => { setTheme(theme() === 'light' ? 'dark' : 'light'); };
   if (app && app.changeServer && $('uServer')) { $('uServer').hidden = false; $('uServer').onclick = () => { close(); app.changeServer(); }; }
-  window.setUserMenu = name => { if (!name) return; $('uAv').textContent = name.slice(0, 1).toUpperCase(); };
+  window.setUserMenu = name => { if (!name) return; $('uAv').textContent = name.slice(0, 1).toUpperCase(); const n = $('uName'); if (n) n.textContent = name; };
 })();
 
 // ---------------------------------------------------------------- gesti col dito: scorri a destra/sinistra = cambia sezione, trascina in giù = aggiorna
@@ -446,6 +460,6 @@ async function start(cfg) {
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
-Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.3.3' };
+Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
+window.Shell = { cfg: CFG, start, version: '0.4.0' };
 })();

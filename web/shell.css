@@ -149,7 +149,9 @@ a.kv:hover span:first-child{color:var(--acc)}
 .modal.open{display:grid}
 .modal.open .box{animation:mIn .16s ease-out}
 @keyframes mIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.modal .box{width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+.modal .box{--boxpad:22px;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--boxpad)}
+/* i tasti in fondo (Salva/Chiudi…) restano sempre a vista: il contenuto scorre, loro no */
+.modal .btns{position:sticky;bottom:calc(-1 * var(--boxpad));background:var(--panel);padding:12px 0 var(--boxpad);margin-bottom:calc(-1 * var(--boxpad));z-index:1}
 .modal h3{margin:0 0 4px;font-size:17px}
 .modal .box.wide{width:min(900px,100%)}
 .modal .sub{color:var(--mute);font-size:12px;margin-bottom:14px}
@@ -187,7 +189,7 @@ footer{text-align:center;color:var(--mute);font-size:11px;padding:10px 0}
   .tile .big{font-size:22px}
   .row .acts .btn.sm{padding:5px 7px}
   .modal{padding:0;align-items:end}
-  .modal .box{width:100%;max-height:92vh;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+  .modal .box{--boxpad:calc(18px + env(safe-area-inset-bottom));width:100%;max-height:92vh;border-radius:16px 16px 0 0;padding:18px 16px var(--boxpad)}
 }
 
 /* pannello amministratore e varie */
@@ -235,8 +237,11 @@ html.ptr-on,html.ptr-on body{overscroll-behavior-y:none}   /* niente "stretch" n
 .ubtn .chev{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--mute);transition:transform .15s}
 .ubtn.open .chev{transform:rotate(180deg)}
 .uav{width:26px;height:26px;border-radius:50%;background:var(--acc);color:var(--acc-ink,#fff);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+/* da PC nella bolla c'è anche il nome utente; sul telefono solo l'iniziale */
+.ubtn .uname{font-size:13px;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 2px}
+@media (max-width:640px){ .ubtn .uname{display:none} }
 /* la tendina sta sempre sotto al pulsante: posizione fissa calcolata all'apertura */
-.udrop{position:fixed;text-align:right;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:50;display:grid}
+.udrop{position:fixed;text-align:right;width:max-content;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:50;display:grid}
 .udrop[hidden]{display:none}
 .udrop > *{display:block}
 .udrop button,.udrop a{width:100%;text-align:right;background:none;border:0;color:var(--text);padding:9px 10px;border-radius:6px;cursor:pointer;font:400 13.5px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-decoration:none}

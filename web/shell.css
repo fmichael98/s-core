@@ -12,6 +12,10 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Ubuntu,Roboto,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 a{color:var(--acc)}
+/* testi da copiare con un clic o un tocco (data-copy): manina, niente sottolineature */
+[data-copy]{cursor:pointer;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .15s}
+[data-copy]:hover{color:var(--text)}
+[data-copy].copied{color:var(--ok)!important}
 .num{font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.01em}
 .pos{color:var(--ok)}.neg{color:var(--bad)}.mute{color:var(--mute)}.warn{color:var(--warn)}
 .acc{color:var(--acc)}

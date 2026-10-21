@@ -196,6 +196,24 @@ function formModal(title, fields, onSave, extra) {
   return form;
 }
 
+// ---------------------------------------------------------------- copia negli appunti
+/** Copia un testo negli appunti (anche senza HTTPS). Ritorna true se riuscito. */
+function copyText(t) {
+  const legacy = () => { const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(a); a.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} a.remove(); return ok; };
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).then(() => true, legacy);
+  return Promise.resolve(legacy());
+}
+// Elementi con data-copy (IBAN, indirizzi…): clic o tocco = copia. Manina come cursore, niente sottolineature.
+// data-copy="testo" (vuoto = il testo dell'elemento). Nell'app Android l'avviso "Copiato" lo mostra già il sistema.
+document.addEventListener('click', async e => {
+  const el = e.target.closest && e.target.closest('[data-copy]'); if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  const t = (el.dataset.copy || el.textContent).trim(); if (!t) return;
+  const ok = await copyText(t);
+  el.classList.add('copied'); setTimeout(() => el.classList.remove('copied'), 1200);
+  if (!ok) toast('Non riesco a copiare: ' + t, true); else if (!app) toast('Copiato: ' + t);
+}, true);
+
 // ---------------------------------------------------------------- tocchi
 /** Tocco breve e tocco lungo (≈0,5 s) su un elemento: funziona con dito e mouse. onTap riceve l'evento (pointerType, target). */
 function tapAndHold(el, onTap, onHold) {
@@ -717,6 +735,6 @@ async function start(cfg) {
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
-Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.11' };
+Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
+window.Shell = { cfg: CFG, start, version: '0.5.12' };
 })();

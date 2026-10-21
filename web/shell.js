@@ -180,20 +180,24 @@ function tapFast(el) {
 
 // ---------------------------------------------------------------- navigazione
 const views = {};
-const viewCache = {};   // ultimo HTML di ogni sezione: lo swipe mostra subito quello, poi lo aggiorna
+const viewCache = {};   // ultimo HTML di ogni sezione (già riempito): lo swipe mostra subito quello
+const scrollPos = {};   // posizione di scorrimento di ogni sezione: si torna dov'eri
 let skipNextRender = false;
 let swipeHash = false;  // cambio di #sezione fatto dallo swipe: non chiude una finestra appena aperta (es. il + toccato subito dopo)
 let renderGen = 0, lastRender = Promise.resolve();
 function navigate() {
   let v = (location.hash || '#' + CFG.home).slice(1).split('?')[0];
   if (CFG.aliases[v]) v = CFG.aliases[v];
+  const prev = S.view;
   S.view = views[v] ? v : CFG.home;
+  const changed = prev !== S.view;
+  if (changed) scrollPos[prev] = window.scrollY;
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === S.view));
   const on = document.querySelector('nav a.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   const fab = $('fab'); if (fab) fab.hidden = CFG.fab ? !CFG.fab.includes(S.view) : CFG.noFab.includes(S.view);
   if (H.onNavigate) try { H.onNavigate(S.view); } catch (e) { console.error(e); }
   if (skipNextRender) { skipNextRender = false; return; }   // lo swipe ha già disegnato la sezione
-  render();
+  render().then(() => { if (changed) window.scrollTo(0, scrollPos[S.view] || 0); });
 }
 window.addEventListener('hashchange', () => { if (!swipeHash) closeModal(); swipeHash = false; navigate(); });
 function render() { lastRender = renderNow(); return lastRender; }
@@ -203,8 +207,9 @@ async function renderNow() {
   try {
     const html = await views[S.view](gen);
     if (gen !== renderGen) return;
-    if (typeof html === 'string') { el.innerHTML = html; viewCache[S.view] = html; }
+    if (typeof html === 'string') el.innerHTML = html;
     if (views[S.view].after) views[S.view].after();
+    if (typeof html === 'string') viewCache[S.view] = el.innerHTML;
   } catch (e) {
     if (gen !== renderGen) return;
     el.innerHTML = `<div class="panel empty">${esc(e.message)}</div>`;
@@ -282,7 +287,8 @@ function gestures() {
     side.style.cssText = `position:absolute;left:0;right:0;top:0;transform:translateX(${dir * W()}px);transition:none;pointer-events:none;min-height:60vh`;
     if (viewCache[name]) side.innerHTML = viewCache[name];   // subito l'ultima versione vista…
     main.appendChild(side);
-    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { viewCache[name] = html; if (side && sideView === name) side.innerHTML = html; } })   // …poi quella fresca
+    if (views[name].static && viewCache[name]) return;      // sezione che si riempie in after(): la copia già disegnata basta
+    Promise.resolve().then(() => views[name](0)).then(html => { if (typeof html === 'string') { if (!views[name].static) viewCache[name] = html; if (side && sideView === name) side.innerHTML = html; } })   // …poi quella fresca
       .catch(e => { if (side && sideView === name && !viewCache[name]) side.innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; });
   };
   window.addEventListener('touchstart', e => {
@@ -359,11 +365,14 @@ function gestures() {
       if (pendingCommit !== commit) return;
       pendingCommit = null;
       try {
+        scrollPos[S.view] = window.scrollY;
         S.view = name; ++renderGen;
         v.style.transition = 'none'; v.style.transform = '';
         v.innerHTML = done.innerHTML;
         dropSide();
         try { if (views[name].after) views[name].after(); } catch (e) { console.error(e); }
+        viewCache[name] = v.innerHTML;
+        window.scrollTo(0, scrollPos[name] || 0);
         if (location.hash === '#' + name) navigate();
         else { skipNextRender = true; swipeHash = true; location.hash = '#' + name; setTimeout(() => { skipNextRender = false; swipeHash = false; }, 300); }
       } finally { busy = false; }
@@ -420,9 +429,9 @@ async function start(cfg) {
   if (CFG.live !== false) live();   // app che fanno da sole (es. SMonitor, che interroga il server a intervalli): niente SSE
   appUpdateInfo().then(showAppUpdBtn);
   // sezioni pronte di lato per lo swipe: le preparo in sottofondo
-  if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string') viewCache[v] = h; }).catch(() => {})); }, 1500);
+  if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.2.1' };
+window.Shell = { cfg: CFG, start, version: '0.3.0' };
 })();

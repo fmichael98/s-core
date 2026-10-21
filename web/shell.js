@@ -92,12 +92,13 @@ new MutationObserver(ms => ms.forEach(m => {
   else if (i >= 0) openStack.splice(i, 1);
 })).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
 function closeTop() {
+  if (xselClose()) return true;
   if (userMenuOpen()) { closeUserMenu(true); return true; }
   const el = openStack[openStack.length - 1]; if (!el) return false;
   if (el.id === 'modal') closeModal(); else { el.classList.remove('open'); if (el.id === 'modal2') $('modalBox2').innerHTML = ''; }
   return true;
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && (openStack.length || userMenuOpen())) { e.preventDefault(); closeTop(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (xselIsOpen() || openStack.length || userMenuOpen())) { e.preventDefault(); closeTop(); } });
 window.appBack = () => closeTop();
 
 /** Scelta tra più opzioni: ritorna la chiave scelta o null. */
@@ -192,6 +193,97 @@ function tapFast(el) {
     if (Date.now() - t0 < 400 && Math.abs(c.clientX - x) < 12 && Math.abs(c.clientY - y) < 12) { e.preventDefault(); el.onclick(e); }
   }, { passive: false });
 }
+
+// ---------------------------------------------------------------- tendine grafiche al posto di quelle di sistema
+// Ogni <select> della pagina diventa un pulsante con la sua tendina (da PC sotto al campo, sul telefono un pannello dal basso).
+// Il <select> vero resta, nascosto: valore, FormData e gli onchange delle app funzionano come prima.
+let xselCur = null;   // { sel, pop }
+const xselIsOpen = () => !!xselCur;
+function xselClose() {
+  if (!xselCur) return false;
+  const { pop, btn } = xselCur; xselCur = null;
+  pop.classList.remove('in'); btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+  setTimeout(() => pop.remove(), 140);
+  return true;
+}
+function xselLabel(sel) {
+  const o = sel.options[sel.selectedIndex];
+  return o ? o.textContent : '';
+}
+function xselSync(sel) { const b = sel._xbtn; if (b) { b.querySelector('.xsel-v').textContent = xselLabel(sel) || '—'; b.disabled = sel.disabled; } }
+function xselOpen(sel) {
+  xselClose();
+  const btn = sel._xbtn, mobile = document.documentElement.clientWidth <= 640;
+  const pop = document.createElement('div'); pop.className = 'xsel-pop' + (mobile ? ' sheet' : ''); pop.setAttribute('role', 'listbox');
+  const lbl = (sel.closest('div, label') && sel.closest('div, label').querySelector('label')) ? sel.closest('div, label').querySelector('label').textContent.trim() : '';
+  let html = mobile && lbl ? `<div class="xsel-title">${esc(lbl)}</div>` : '';
+  html += '<div class="xsel-list">';
+  [...sel.children].forEach(ch => {
+    if (ch.tagName === 'OPTGROUP') { html += `<div class="xsel-grp">${esc(ch.label)}</div>`; [...ch.children].forEach(o => html += opt(o)); }
+    else html += opt(ch);
+  });
+  function opt(o) {
+    const on = o.selected;
+    return `<button type="button" role="option" class="xsel-o${on ? ' on' : ''}" data-i="${o.index}" ${o.disabled ? 'disabled' : ''} aria-selected="${on}"><span>${esc(o.textContent)}</span>${on ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</button>`;
+  }
+  html += '</div>';
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
+  if (!mobile) {
+    const r = btn.getBoundingClientRect(), vh = window.innerHeight;
+    pop.style.minWidth = r.width + 'px'; pop.style.left = Math.min(r.left, document.documentElement.clientWidth - Math.max(r.width, pop.offsetWidth) - 8) + 'px';
+    const below = vh - r.bottom - 12, above = r.top - 12;
+    if (below >= Math.min(pop.offsetHeight, 260) || below >= above) { pop.style.top = (r.bottom + 6) + 'px'; pop.style.maxHeight = Math.max(160, below) + 'px'; }
+    else { pop.style.bottom = (vh - r.top + 6) + 'px'; pop.style.maxHeight = Math.max(160, above) + 'px'; pop.classList.add('up'); }
+  }
+  xselCur = { sel, pop, btn };
+  btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+  requestAnimationFrame(() => pop.classList.add('in'));
+  const cur = pop.querySelector('.xsel-o.on') || pop.querySelector('.xsel-o:not([disabled])');
+  if (cur) { cur.scrollIntoView({ block: 'nearest' }); if (!('ontouchstart' in window)) cur.focus(); }
+  pop.addEventListener('click', e => {
+    const b = e.target.closest('.xsel-o'); if (!b || b.disabled) return;
+    const i = +b.dataset.i; const changed = sel.selectedIndex !== i;
+    sel.selectedIndex = i; xselSync(sel); xselClose(); btn.focus();
+    if (changed) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+  });
+  pop.addEventListener('keydown', e => {
+    const os = [...pop.querySelectorAll('.xsel-o:not([disabled])')], i = os.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); (os[i + 1] || os[0]).focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); (os[i - 1] || os[os.length - 1]).focus(); }
+    if (e.key === 'Tab') { xselClose(); }
+  });
+}
+function xselEnhance(sel) {
+  if (sel._xbtn || sel.multiple || sel.size > 1 || sel.closest('.xsel-skip')) return;
+  const cs = getComputedStyle(sel);
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'xsel-btn ' + sel.className; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
+  if (sel.id) btn.dataset.for = sel.id;
+  btn.innerHTML = '<span class="xsel-v"></span><svg class="xsel-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  if (sel.getAttribute('style')) btn.setAttribute('style', sel.getAttribute('style'));
+  if (cs.flexGrow !== '0') btn.style.flexGrow = cs.flexGrow;
+  sel.classList.add('xsel-native'); sel.tabIndex = -1; sel.setAttribute('aria-hidden', 'true');
+  sel.after(btn); sel._xbtn = btn;
+  // valore cambiato dal codice (sel.value = …, opzioni riscritte): il pulsante si aggiorna da solo
+  const proto = HTMLSelectElement.prototype;
+  for (const k of ['value', 'selectedIndex']) {
+    const d = Object.getOwnPropertyDescriptor(proto, k);
+    Object.defineProperty(sel, k, { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v); xselSync(this); } });
+  }
+  new MutationObserver(() => xselSync(sel)).observe(sel, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'selected'] });
+  sel.addEventListener('change', () => xselSync(sel));
+  btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (xselCur && xselCur.sel === sel) xselClose(); else xselOpen(sel); });
+  btn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xselOpen(sel); } });
+  xselSync(sel);
+}
+function xselScan(root) { (root.matches && root.matches('select') ? [root] : [...(root.querySelectorAll ? root.querySelectorAll('select') : [])]).forEach(xselEnhance); }
+xselScan(document.body);
+new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && xselScan(n)))).observe(document.body, { childList: true, subtree: true });
+document.addEventListener('pointerdown', e => { if (xselCur && !e.target.closest('.xsel-pop') && e.target.closest('.xsel-btn') !== xselCur.btn) xselClose(); }, true);
+window.addEventListener('resize', () => xselClose());
+window.addEventListener('scroll', e => { if (xselCur && !(e.target && e.target.closest && e.target.closest('.xsel-pop'))) xselClose(); }, true);
+// clic sull'etichetta del campo: apre la tendina (come faceva il select)
+document.addEventListener('click', e => { const l = e.target.closest('label'); if (!l) return; const s = l.querySelector('select.xsel-native') || (l.htmlFor && $(l.htmlFor)); if (s && s._xbtn && !e.target.closest('.xsel-btn')) { e.preventDefault(); xselOpen(s); } });
 
 // ---------------------------------------------------------------- navigazione
 const views = {};
@@ -382,7 +474,7 @@ function gestures() {
     if (busy || e.touches.length !== 1 || anyModal()) return;
     const tch = e.touches[0];
     if (tch.target.closest('.udrop, .umenu')) return;   // tocco dentro il menu utente: è un clic sulle voci, non un gesto
-    if (tch.target.closest('nav, input[type=range], .xscroll')) return;   // barra delle sezioni, cursori e liste che scorrono di lato: tutto il resto si swipa (anche campi di testo e tendine)
+    if (tch.target.closest('nav, input[type=range], .xscroll, .xsel-pop')) return;   // barra delle sezioni, cursori e liste che scorrono di lato: tutto il resto si swipa (anche campi di testo e tendine)
     x0 = tch.clientX; y0 = tch.clientY; t0 = Date.now(); mode = null; d = 0; dx = 0;
   }, { passive: true });
   window.addEventListener('touchmove', e => {
@@ -533,5 +625,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.2' };
+window.Shell = { cfg: CFG, start, version: '0.5.3' };
 })();

@@ -290,3 +290,33 @@ button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
 .ubtn:active .uav{transform:scale(.92)}
 .fab:active{transform:scale(.92);filter:brightness(.9)}
 .row.click:active,.grp-head:active{background:var(--line)}
+
+/* tendine grafiche (al posto della finestra di sistema): pulsante uguale ai campi, elenco a scheda */
+select.xsel-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important;border:0!important}
+.xsel-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;height:40px;padding:0 10px 0 12px;border-radius:8px;border:1px solid var(--line);background:var(--inp);color:var(--text);
+  font:400 14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:left;cursor:pointer;white-space:nowrap;max-width:100%}
+.xsel-btn .xsel-v{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.xsel-btn .xsel-chev{width:16px;height:16px;flex:none;fill:none;stroke:var(--mute);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.xsel-btn.open{border-color:var(--acc)}.xsel-btn.open .xsel-chev{transform:rotate(180deg)}
+.xsel-btn:disabled{opacity:.5;cursor:default}
+.fg .xsel-btn{display:flex;width:100%;height:48px;margin-top:5px;font-size:16px;padding:0 12px 0 12px}
+.xsel-pop{position:fixed;z-index:60;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;overflow:auto;overscroll-behavior:contain;
+  box-shadow:0 18px 50px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.25);opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top left;transition:opacity .12s,transform .12s}
+.xsel-pop.up{transform-origin:bottom left;transform:translateY(4px) scale(.98)}
+.xsel-pop.in{opacity:1;transform:none}
+.xsel-o{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 12px;border:0;border-radius:8px;background:none;color:var(--text);
+  font:400 14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:left;cursor:pointer}
+.xsel-o:hover,.xsel-o:focus-visible{background:var(--panel2);outline:none}
+.xsel-o.on{color:var(--acc);font-weight:600}
+.xsel-o svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.xsel-o:disabled{opacity:.45;cursor:default}
+.xsel-grp{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;padding:10px 12px 4px}
+/* telefono: pannello che sale dal basso */
+.xsel-pop.sheet{left:0;right:0;bottom:0;top:auto;max-width:none;max-height:70vh;border-radius:16px 16px 0 0;border-bottom:0;padding:8px 8px calc(10px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .2s cubic-bezier(.2,.7,.3,1),opacity .12s}
+.xsel-pop.sheet.in{transform:none}
+.xsel-pop.sheet{box-shadow:0 0 0 100vmax rgba(0,0,0,0);transition:transform .2s cubic-bezier(.2,.7,.3,1),opacity .12s,box-shadow .2s}
+.xsel-pop.sheet.in{box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}   /* oscura il resto dello schermo */
+.xsel-pop.sheet::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 8px}
+.xsel-pop.sheet .xsel-o{padding:13px 14px;font-size:16px}
+.xsel-title{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;padding:2px 14px 8px}
+:root[data-theme=light] .xsel-pop{box-shadow:0 18px 50px rgba(20,30,50,.18),0 2px 8px rgba(20,30,50,.08)}

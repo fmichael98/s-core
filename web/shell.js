@@ -13,8 +13,9 @@
 (function () {
 'use strict';
 
-const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, home: 'home', fab: null, noFab: [], aliases: {} }, window.SHELL || {});
+const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true }, window.SHELL || {});
 const H = {};   // ganci dell'app (da Shell.start)
+const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen && H.modalOpen());   // finestra del guscio o finestre proprie dell'app
 
 // nessun campo propone testi già scritti (il riquadro dei suggerimenti chiude la tastiera nell'app)
 (function () {
@@ -287,11 +288,11 @@ function gestures() {
   window.addEventListener('touchstart', e => {
     x0 = null;
     if (pendingCommit) pendingCommit();
-    if (busy || e.touches.length !== 1 || $('modal').classList.contains('open')) return;
+    if (busy || e.touches.length !== 1 || anyModal()) return;
     const tch = e.touches[0];
     if (tch.target.closest('.udrop, .umenu')) return;   // tocco dentro il menu utente: è un clic sulle voci, non un gesto
     const ud = $('uDrop'); if (ud && !ud.hidden) { ud.hidden = true; $('uBtn').classList.remove('open'); }   // menu aperto e tocco fuori: si chiude e il gesto prosegue
-    if (tch.target.closest('nav, input, textarea, select')) return;   // solo la barra delle sezioni e i campi: tutto il resto si swipa
+    if (tch.target.closest('nav, input, textarea, select, .xscroll')) return;   // barra delle sezioni, campi e liste che scorrono di lato: tutto il resto si swipa
     x0 = tch.clientX; y0 = tch.clientY; t0 = Date.now(); mode = null; d = 0; dx = 0;
   }, { passive: true });
   window.addEventListener('touchmove', e => {
@@ -377,7 +378,7 @@ function gestures() {
 // Se il server riparte con una versione nuova, la pagina si ricarica da sola.
 function live() {
   let es = null, timer = null, retry = 1000, last = null, pending = false;
-  const editing = () => { const a = document.activeElement; return $('modal').classList.contains('open') || (a && a.closest && a.closest('#view') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
+  const editing = () => { const a = document.activeElement; return anyModal() || (a && a.closest && a.closest('#view') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
   const refresh = () => {
     clearTimeout(timer);
     timer = setTimeout(async () => {
@@ -399,13 +400,14 @@ function live() {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (!es) connect(); else refresh(); if (H.onVisible) try { H.onVisible(); } catch (e) {} } });
   // finita la modifica (modale chiusa / campo lasciato): se nel frattempo è cambiato qualcosa, ridisegno
   document.addEventListener('focusout', () => { if (pending) refresh(); });
-  const mo = new MutationObserver(() => { if (pending && !$('modal').classList.contains('open')) refresh(); });
+  const mo = new MutationObserver(() => { if (pending && !anyModal()) refresh(); });
   mo.observe($('modal'), { attributes: true, attributeFilter: ['class'] });
 }
 
 // ---------------------------------------------------------------- avvio
 /** cfg: { load: async () => {…dati di base…}, currency: () => '€', onForm(form, fields, vals), onNavigate(view),
- *         onPull: async () => {…}, onVisible: () => {…}, afterLoad: () => {…}, onTheme(t), fab: () => {…} } */
+ *         onPull: async () => {…}, onVisible: () => {…}, afterLoad: () => {…}, onTheme(t), fab: () => {…},
+ *         modalOpen: () => bool (finestre proprie dell'app aperte: niente gesti né ridisegni) } */
 async function start(cfg) {
   Object.assign(H, cfg || {});
   if (!H.load) H.load = async () => { S.settings = await get('/api/settings'); };
@@ -415,12 +417,12 @@ async function start(cfg) {
   if (H.afterLoad) try { H.afterLoad(); } catch (e) { console.error(e); }
   navigate();
   gestures();
-  live();
+  if (CFG.live !== false) live();   // app che fanno da sole (es. SMonitor, che interroga il server a intervalli): niente SSE
   appUpdateInfo().then(showAppUpdBtn);
   // sezioni pronte di lato per lo swipe: le preparo in sottofondo
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string') viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, openModal, closeModal, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.1.1' };
+window.Shell = { cfg: CFG, start, version: '0.2.0' };
 })();

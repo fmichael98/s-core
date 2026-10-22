@@ -1,6 +1,6 @@
 [package]
 name = "s-core"
-version = "0.7.3"
+version = "0.7.4"
 edition = "2021"
 description = "Guscio comune delle app S* (SMoney, SHealth, SCalendar, SMonitor): barra, menu utente, gesti, finestre, aggiornamento dal vivo"
 publish = false

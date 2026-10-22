@@ -128,7 +128,7 @@ function closeTop() {
   if (el.id === 'modal') closeModal(); else { el.classList.remove('open'); if (el.id === 'modal2') $('modalBox2').innerHTML = ''; }
   return true;
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && (xselIsOpen() || openStack.length || userMenuOpen())) { e.preventDefault(); closeTop(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented && (xselIsOpen() || openStack.length || userMenuOpen())) { e.preventDefault(); closeTop(); } });
 window.appBack = () => closeTop();
 
 /** Scelta tra più opzioni: ritorna la chiave scelta o null. */

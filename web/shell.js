@@ -691,7 +691,9 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     const r = btn.getBoundingClientRect(), hh = drop.offsetHeight || 0;
     const up = hh && r.bottom + 8 + hh > innerHeight - 8 && r.top - 8 - hh >= 8;
     drop.style.top = up ? (r.top - 8 - hh) + 'px' : (r.bottom + 8) + 'px';
-    drop.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px';
+    // allineato a destra del pulsante, ma sempre dentro lo schermo (pulsante a sinistra, es. SMap da PC)
+    const cw = document.documentElement.clientWidth, w = drop.offsetWidth || 256;
+    drop.style.right = Math.max(8, Math.min(cw - r.right, cw - w - 8)) + 'px';
     drop.classList.toggle('up', !!up);
   };
   const close = (focusBtn) => {
@@ -970,5 +972,5 @@ const Palette = {
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
 window.Combo = Combo;
-window.Shell = { cfg: CFG, start, version: '0.9.4' };
+window.Shell = { cfg: CFG, start, version: '0.9.5' };
 })();

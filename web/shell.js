@@ -110,7 +110,13 @@ function openModal(html, cls) {
   Promise.race([Promise.all(imgs.map(i => new Promise(r => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); }))), new Promise(r => setTimeout(r, 600))]).then(show);
 }
 function closeModal() { ++modalGen; $('modal').classList.remove('open'); $('modalBox').innerHTML = ''; }
-$('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+// chiude toccando lo sfondo, ma solo se il tocco è iniziato lì: trascinare una selezione e lasciare fuori non chiude
+function backdropClose(el, close) {
+  let down = false;
+  el.addEventListener('pointerdown', e => { down = e.target === el; });
+  el.addEventListener('click', e => { if (e.target === el && down) close(); down = false; });
+}
+backdropClose($('modal'), closeModal);
 // Finestre aperte (quella del guscio e quelle proprie dell'app: ogni .modal che prende la classe .open): Esc da PC e Indietro nell'app
 // chiudono sempre l'ultima aperta.
 const openStack = [];
@@ -809,6 +815,6 @@ async function start(cfg) {
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
-Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
+Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
 window.Shell = { cfg: CFG, start, version: '0.7.2' };
 })();

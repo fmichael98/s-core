@@ -695,10 +695,12 @@ function live() {
   function connect() {
     if (es) { try { es.close(); } catch (e) {} }
     es = new EventSource(CFG.events);   // flusso degli avvisi (SCalendar lo ha su /api/live: /api/events sono i suoi eventi)
-    es.onopen = () => { setLive(true); retry = 1000; };
+    es.onopen = () => { setLive(true); retry = 1000; if (H.onOnline) try { H.onOnline(); } catch (x) {} };
     es.addEventListener('version', e => { if (window.__srvVer && window.__srvVer !== e.data) { toast(CFG.name + ' aggiornato: ricarico…'); setTimeout(() => location.reload(), 600); return; } window.__srvVer = e.data; });
     es.addEventListener('hello', e => { if (last !== null && last !== e.data) refresh(); last = e.data; });   // tornato online: qualcosa può essere cambiato
     es.addEventListener('changed', e => { last = e.data; refresh(); });
+    // avvisi propri dell'app (es. SNotes: nota cambiata, cursori degli altri): Shell.start({ sse: { nome: fn(dati) } })
+    Object.entries(H.sse || {}).forEach(([k, fn]) => es.addEventListener(k, e => { try { fn(e.data); } catch (x) { console.error(x); } }));
     es.onerror = () => { setLive(false); try { es.close(); } catch (e) {} es = null; setTimeout(connect, retry); retry = Math.min(retry * 2, 10000); };
   }
   connect();
@@ -743,5 +745,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.13' };
+window.Shell = { cfg: CFG, start, version: '0.5.14' };
 })();

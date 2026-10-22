@@ -40,7 +40,9 @@ nav a.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparen
 
 main{max-width:1200px;margin:0 auto;padding:18px 16px;display:grid;gap:16px}
 /* contenitore delle sezioni: lo swipe muove solo quello che c'è qui dentro, mai la pagina */
-.pages{position:relative;overflow:hidden;width:100%}
+.pages{position:relative;overflow:hidden;overflow:clip;width:100%}   /* clip: taglia lo swipe ma non blocca gli elementi fissati (sticky) */
+/* barra di ricerca degli elenchi: resta sotto la barra in alto mentre si scorre (anche .stick per altre barre) */
+#view > .toolbar:has(input[type=search]),#view .stick{position:sticky;top:var(--toph,0px);z-index:4;background:var(--bg);margin:-8px -4px;padding:8px 4px}
 /* dentro le pagine lo scorrimento orizzontale col dito è sempre lo swipe tra sezioni (anche su grafici, tabelle, riquadri) */
 .pages *:not(input[type=range]){touch-action:pan-y}
 /* …tranne le liste segnate .xscroll (es. porte di un servizio), che scorrono di lato col dito */

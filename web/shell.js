@@ -196,6 +196,13 @@ function formModal(title, fields, onSave, extra) {
   return form;
 }
 
+// altezza della barra in alto (--toph): le barre fissate negli elenchi (ricerca) restano subito sotto
+(function () {
+  const top = document.querySelector('.top'); if (!top || !window.ResizeObserver) return;
+  const set = () => document.documentElement.style.setProperty('--toph', top.offsetHeight + 'px');
+  new ResizeObserver(set).observe(top); set();
+})();
+
 // ---------------------------------------------------------------- copia negli appunti
 /** Copia un testo negli appunti (anche senza HTTPS). Ritorna true se riuscito. */
 function copyText(t) {
@@ -736,5 +743,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.12' };
+window.Shell = { cfg: CFG, start, version: '0.5.13' };
 })();

@@ -33,7 +33,12 @@ const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen &
   const sync = () => {
     queued = false;
     for (const a of document.getAnimations()) {
-      try { if (a.effect && a.effect.getComputedTiming().iterations === Infinity && a.startTime !== 0 && a.playState === 'running') a.startTime = 0; } catch (e) { /* animazione già finita */ }
+      try {
+        // non il cursore di scrittura (deve ripartire acceso a ogni clic) né i campi degli editor
+        const el = a.effect && a.effect.target;
+        if (el && el.closest && el.closest('.cm-editor, .cm-cursorLayer, [contenteditable]')) continue;
+        if (a.effect && a.effect.getComputedTiming().iterations === Infinity && a.startTime !== 0 && a.playState === 'running') a.startTime = 0;
+      } catch (e) { /* animazione già finita */ }
     }
   };
   const later = () => { if (!queued) { queued = true; requestAnimationFrame(sync); } };

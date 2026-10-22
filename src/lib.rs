@@ -217,6 +217,10 @@ mod tests {
         assert!(ver_gt("1.1.2", "1.1.0") && !ver_gt("1.1.0", "1.1.0") && ver_gt("1.10.0", "1.9.9"));
         assert_eq!(changelog_json(md, Some("1.1.0")), r#"[{"version":"1.1.2","items":[{"n":1,"text":"prima"},{"n":2,"text":"seconda"}]}]"#);
         assert!(dev_tests_json("## 2.0\n- novità con «accenti» è ok\n", "2.0", &[], &[]).contains("novità con «accenti» è ok"));
+        assert_eq!(client_label("Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/129.0 Mobile Safari/537.36 SNotesApp/1.4").as_deref(), Some("app 1.4 · Android 14"));
+        assert_eq!(client_label("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0").as_deref(), Some("Firefox · Windows"));
+        assert_eq!(client_label("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15").as_deref(), Some("Safari · macOS"));
+        assert_eq!(client_label("Dalvik/2.1.0 (Linux; U; Android 14)"), None);
         let j = dev_tests_json(md, "1.1.2", &[("1.1.2".into(), 2)], &[("1.1.2".into(), 1700000000)]);
         assert_eq!(j, r#"{"current":"1.1.2","versions":[{"version":"1.1.2","installed":1700000000,"items":[{"done":false,"n":1,"text":"prima"},{"done":true,"n":2,"text":"seconda"}]},{"version":"1.1.0","installed":0,"items":[{"done":false,"n":1,"text":"vecchia"}]}]}"#);
     }
@@ -254,6 +258,33 @@ pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)], installed
     out.push_str("]}");
     out
 }
+
+/// User-Agent → etichetta breve per l'elenco utenti: "app 1.27 · Android 14", "Chrome · Windows".
+/// None per le richieste automatiche in sottofondo (es. controllo notifiche dell'app), che non contano come uso.
+pub fn client_label(ua: &str) -> Option<String> {
+    if ua.is_empty() || ua.starts_with("Dalvik/") || ua.starts_with("okhttp") || ua.starts_with("curl") {
+        return None;
+    }
+    let os = if let Some(i) = ua.find("Android ") {
+        let v: String = ua[i + 8..].chars().take_while(|c| c.is_ascii_digit() || *c == '.').collect();
+        format!("Android {}", v.split('.').next().unwrap_or(""))
+    } else if ua.contains("iPhone") || ua.contains("iPad") { "iOS".into() }
+    else if ua.contains("Windows") { "Windows".into() }
+    else if ua.contains("Mac OS X") || ua.contains("Macintosh") { "macOS".into() }
+    else if ua.contains("Linux") { "Linux".into() }
+    else { String::new() };
+    let os = os.trim().to_string();
+    // le nostre app Android aggiungono "<Nome>App/<versione>"
+    let app = ua.split_whitespace().find_map(|t| t.split_once("App/").filter(|(n, v)| !n.is_empty() && n.chars().all(|c| c.is_ascii_alphanumeric()) && !v.is_empty()).map(|(_, v)| v.to_string()));
+    let who = match app {
+        Some(v) => format!("app {v}"),
+        None => (if ua.contains("Edg/") { "Edge" } else if ua.contains("OPR/") { "Opera" } else if ua.contains("Firefox/") { "Firefox" }
+                 else if ua.contains("Chrome/") { "Chrome" } else if ua.contains("Safari/") { "Safari" } else { "browser" }).to_string(),
+    };
+    Some(if os.is_empty() { who } else { format!("{who} · {os}") })
+}
+/// Colonne per "ultima volta visto" e "con cosa" (da aggiungere se mancano).
+pub const SEEN_COLS: [(&str, &str); 2] = [("last_seen", "INTEGER"), ("last_client", "TEXT")];
 
 /// SQL per la tabella delle spunte (da eseguire una volta nella migrazione dell'app).
 pub const DEV_TESTS_SQL: &str = "CREATE TABLE IF NOT EXISTS dev_tests (user_id INTEGER NOT NULL, version TEXT NOT NULL, n INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (user_id, version, n));

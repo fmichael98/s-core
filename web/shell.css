@@ -10,7 +10,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Ubuntu,Roboto,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Ubuntu,Roboto,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 a{color:var(--acc)}
 /* testi da copiare con un clic o un tocco (data-copy): manina, niente sottolineature */
 [data-copy]{cursor:pointer;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .15s}
@@ -220,7 +220,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--text)}
 html.ptr-on,html.ptr-on body{overscroll-behavior-y:none}   /* niente "stretch" né ricarica del browser: il trascinamento lo gestisce il guscio */
 #ptr{position:fixed;left:50%;top:104px;z-index:8;width:40px;height:40px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
   display:grid;place-items:center;color:var(--mute);opacity:0;transform:translate(-50%,-50px);pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
-#ptr svg{display:block}
+#ptr svg{display:block;transform-origin:50% 50%;transform-box:fill-box}   /* la rotellina gira su sé stessa (senza, su alcuni Android ruota attorno a un angolo e "deriva") */
 #ptr.ready{color:var(--acc);border-color:var(--acc)}
 #ptr.spin svg{animation:ptrspin .8s linear infinite;color:var(--acc)}
 #ptr.done{color:var(--acc-ink,#fff);background:var(--acc);border-color:var(--acc)}

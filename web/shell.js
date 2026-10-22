@@ -128,12 +128,16 @@ function toast(msg, bad) {
 let modalGen = 0;
 /** Apre la finestra solo quando il contenuto è pronto (immagini caricate, al massimo 600 ms): niente finestra che si ridimensiona mentre si apre. */
 function openModal(html, cls) {
+  blurSearch();
   const box = $('modalBox'); box.innerHTML = html; box.className = 'box' + (cls ? ' ' + cls : ''); const g = ++modalGen;
   const imgs = [...box.querySelectorAll('img')].filter(i => !i.complete);
   const show = () => { if (g !== modalGen || !box.innerHTML) return; $('modal').classList.add('open'); };
   if (!imgs.length) { show(); return; }
   Promise.race([Promise.all(imgs.map(i => new Promise(r => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); }))), new Promise(r => setTimeout(r, 600))]).then(show);
 }
+/** la ricerca perde il cursore appena si fa altro (si apre una finestra, si tocca altrove): niente tastiera che resta su */
+function blurSearch(except) { const a = document.activeElement; if (a && a.matches && a.matches('#view input[type=search]') && a !== except) a.blur(); }
+document.addEventListener('pointerdown', e => { const a = document.activeElement; if (a && a.matches && a.matches('#view input[type=search]') && !a.contains(e.target)) blurSearch(); }, true);
 function closeModal() { ++modalGen; $('modal').classList.remove('open'); $('modalBox').innerHTML = ''; }
 // chiude toccando lo sfondo, ma solo se il tocco è iniziato lì: trascinare una selezione e lasciare fuori non chiude
 function backdropClose(el, close) {
@@ -878,5 +882,5 @@ const Palette = {
   },
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.9.2' };
+window.Shell = { cfg: CFG, start, version: '0.9.3' };
 })();

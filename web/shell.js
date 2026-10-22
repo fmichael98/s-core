@@ -595,9 +595,13 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     if (H.onTheme) try { H.onTheme(t); } catch (e) {}
   };
   showTheme();
+  // sotto al pulsante; se non c'è posto (pulsante in fondo alla pagina, es. SMap da PC) sopra
   const place = () => {
-    const r = btn.getBoundingClientRect();
-    drop.style.top = (r.bottom + 8) + 'px'; drop.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px';
+    const r = btn.getBoundingClientRect(), hh = drop.offsetHeight || 0;
+    const up = hh && r.bottom + 8 + hh > innerHeight - 8 && r.top - 8 - hh >= 8;
+    drop.style.top = up ? (r.top - 8 - hh) + 'px' : (r.bottom + 8) + 'px';
+    drop.style.right = Math.max(8, document.documentElement.clientWidth - r.right) + 'px';
+    drop.classList.toggle('up', !!up);
   };
   const close = (focusBtn) => {
     if (drop.hidden) return;
@@ -608,7 +612,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
   const open = () => {
     // tema gestito dall'app (CFG.theme = { label(), cycle() }, es. SMap: chiaro/scuro/automatico): voce con la sua scritta
     if (CFG.theme) { const l = drop.querySelector('#uThemeRow .ulbl'); if (l) l.lastChild.nodeValue = CFG.theme.label ? CFG.theme.label() : 'Tema'; }
-    place(); drop.hidden = false; requestAnimationFrame(() => drop.classList.add('in'));
+    drop.hidden = false; place(); requestAnimationFrame(() => drop.classList.add('in'));
     btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   };
   closeUserMenu = close; userMenuOpen = () => !drop.hidden && drop.classList.contains('in');
@@ -874,5 +878,5 @@ const Palette = {
   },
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.9.1' };
+window.Shell = { cfg: CFG, start, version: '0.9.2' };
 })();

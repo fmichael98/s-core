@@ -400,7 +400,7 @@ document.addEventListener('click', e => { const l = e.target.closest('label'); i
 // ---------------------------------------------------------------- campo con suggerimenti (combobox)
 /** Combo.attach(input, items, opts): scrivendo filtra l'elenco e completa la prima voce che inizia così;
  *  ↑/↓ scelgono, Invio o Tab confermano, Esc annulla, clic su una voce la sceglie. L'elenco si apre sotto al campo.
- *  items: [{ v, t, color?, sub? }]
+ *  items: [{ v, t, color? (#rrggbb) | pal? (chiave della tavolozza comune), sub? }]
  *  opts: { value (v di partenza), allowEmpty (voce "nessuno"), emptyLabel, placeholder,
  *          onPick(item|null, how) how = 'Enter' | 'ShiftEnter' | 'Tab' | 'ShiftTab' | 'click' | 'blur', onCancel() }
  *  Ritorna { close() }. */
@@ -426,7 +426,7 @@ const Combo = (function () {
       else { pop.style.bottom = (vh - r.top + 4) + 'px'; pop.style.maxHeight = Math.max(140, above) + 'px'; pop.classList.add('up'); }
     };
     const draw = () => {
-      pop.innerHTML = list.length ? list.map((x, i) => `<button type="button" role="option" tabindex="-1" class="xsel-o${i === hi ? ' hi' : ''}${x.empty ? ' empty' : ''}${start && x.v === start.v && !x.empty ? ' on' : ''}" data-i="${i}"><span>${x.color ? `<i class="combo-dot" style="background:${esc(x.color)}"></i>` : ''}${esc(x.t)}</span>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</button>`).join('')
+      pop.innerHTML = list.length ? list.map((x, i) => `<button type="button" role="option" tabindex="-1" class="xsel-o${i === hi ? ' hi' : ''}${x.empty ? ' empty' : ''}${start && x.v === start.v && !x.empty ? ' on' : ''}" data-i="${i}"><span>${x.pal ? `<i class="combo-dot pal-${esc(x.pal)}" style="background:var(--pal-acc)"></i>` : x.color ? `<i class="combo-dot" style="background:${esc(x.color)}"></i>` : ''}${esc(x.t)}</span>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</button>`).join('')
         : '<div class="combo-none">nessuna corrispondenza</div>';
       place();
       const h = pop.querySelector('.xsel-o.hi'); if (h) h.scrollIntoView({ block: 'nearest' });
@@ -972,5 +972,5 @@ const Palette = {
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
 window.Combo = Combo;
-window.Shell = { cfg: CFG, start, version: '0.9.5' };
+window.Shell = { cfg: CFG, start, version: '0.9.6' };
 })();

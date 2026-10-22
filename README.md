@@ -30,7 +30,7 @@ Shell.start({ load: async () => { S.settings = await get('/api/settings'); }, fa
 ```
 Globali disponibili: `$ esc css app S api get setLive toast openModal closeModal choose confirmDel formModal COLORS tapAndHold tapFast views viewCache navigate render`.
 
-Campo con suggerimenti: `Combo.attach(input, [{v, t, color, sub}], { value, allowEmpty, onPick(item, how), onCancel })` — scrivendo filtra e completa, ↑/↓ scelgono, Invio/Tab confermano (`how` dice quale tasto, con `Shift` davanti se premuto), Esc annulla.
+Campo con suggerimenti: `Combo.attach(input, [{v, t, color | pal, sub}], { value, allowEmpty, onPick(item, how), onCancel })` — scrivendo filtra e completa, ↑/↓ scelgono, Invio/Tab confermano (`how` dice quale tasto, con `Shift` davanti se premuto), Esc annulla.
 
 Tavolozza comune (colori di note, schede…): 6 pastello + nessuno, `Palette.colors`. La classe `Palette.cls(chiave)` (`pal-yellow`…) dà `--pal-bg` (fondo), `--pal-line` (bordo), `--pal-acc` (elementi sopra: caselle, icone) e `--pal-ink` (segno sopra `--pal-acc`), giusti in tema chiaro e scuro. `Palette.open(tasto, scelto, k => …)` apre la scelta.
 

@@ -356,3 +356,28 @@ html.modal-on,html.modal-on body{overflow:hidden;overscroll-behavior:none}
 .devit{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer;text-transform:none;letter-spacing:0}
 .devit input{margin:3px 0 0;accent-color:var(--acc);flex:none;width:16px;height:16px}
 .devit.on span{color:var(--mute);text-decoration:line-through}
+
+/* ---------------------------------------------------------------- tavolozza comune (6 pastello)
+   .pal-<colore> su un elemento dà 4 variabili, giuste in tema scuro e chiaro:
+   --pal-bg (fondo), --pal-line (bordo), --pal-acc (elementi sopra: caselle, icone, segni — più scuro del fondo
+   in chiaro, pastello pieno in scuro), --pal-ink (testo/segno sopra --pal-acc). I nomi vecchi (red, teal…)
+   si vedono come il più vicino. Scelta: Palette.open(…) (shell.js). */
+.pal-none{--pal-bg:var(--panel);--pal-line:var(--line);--pal-acc:var(--acc);--pal-ink:var(--acc-ink,#1b1b1b)}
+.pal-yellow{--pal-bg:#37301a;--pal-line:#5e5126;--pal-acc:#f2d36b;--pal-ink:#1b1b1b}
+.pal-orange,.pal-brown{--pal-bg:#3a2a1f;--pal-line:#634632;--pal-acc:#f5b183;--pal-ink:#1b1b1b}
+.pal-pink,.pal-red{--pal-bg:#3a222c;--pal-line:#633a4b;--pal-acc:#f19cbd;--pal-ink:#1b1b1b}
+.pal-purple,.pal-indigo{--pal-bg:#2c2539;--pal-line:#4c4063;--pal-acc:#c3a9f2;--pal-ink:#1b1b1b}
+.pal-blue,.pal-gray{--pal-bg:#1f2c3a;--pal-line:#365069;--pal-acc:#8fc0f0;--pal-ink:#1b1b1b}
+.pal-green,.pal-teal{--pal-bg:#1f3329;--pal-line:#365a47;--pal-acc:#8fd6ab;--pal-ink:#1b1b1b}
+:root[data-theme=light] .pal-none{--pal-acc:color-mix(in srgb,var(--acc) 80%,#000);--pal-ink:#fff}
+:root[data-theme=light] .pal-yellow{--pal-bg:#fdf3c6;--pal-line:#ecd67e;--pal-acc:#a98200;--pal-ink:#fff}
+:root[data-theme=light] :is(.pal-orange,.pal-brown){--pal-bg:#fde5d3;--pal-line:#f0bb93;--pal-acc:#c2621f;--pal-ink:#fff}
+:root[data-theme=light] :is(.pal-pink,.pal-red){--pal-bg:#fbe1ea;--pal-line:#eeaac3;--pal-acc:#c0456f;--pal-ink:#fff}
+:root[data-theme=light] :is(.pal-purple,.pal-indigo){--pal-bg:#ece4fa;--pal-line:#c7b3ee;--pal-acc:#7650c4;--pal-ink:#fff}
+:root[data-theme=light] :is(.pal-blue,.pal-gray){--pal-bg:#deedfb;--pal-line:#9fc6ec;--pal-acc:#2c6fb8;--pal-ink:#fff}
+:root[data-theme=light] :is(.pal-green,.pal-teal){--pal-bg:#ddf3e5;--pal-line:#9fd6b2;--pal-acc:#2a8552;--pal-ink:#fff}
+.palpop{position:fixed;z-index:60;display:grid;grid-template-columns:repeat(7,26px);gap:8px;padding:10px;border-radius:12px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 26px rgba(0,0,0,.4)}
+.palsw{width:26px;height:26px;border-radius:50%;padding:0;cursor:pointer;background:var(--pal-bg);border:2px solid color-mix(in srgb,var(--pal-acc) 65%,transparent)}
+.palsw.pal-none{background:var(--panel2);border-color:var(--line)}
+.palsw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--panel)}
+.palsw:focus-visible{outline:2px solid var(--acc);outline-offset:2px}

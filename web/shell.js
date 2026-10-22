@@ -843,6 +843,29 @@ async function start(cfg) {
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
-Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.7.2' };
+/**
+ * Tavolozza comune: 6 colori pastello (+ nessuno). La classe pal-<chiave> dà fondo, bordo e colore degli elementi sopra
+ * (shell.css). Palette.open(tasto, scelto, scelta => …) apre la scelta sopra al tasto (sotto se non c'è posto).
+ */
+const Palette = {
+  colors: [['', 'Nessuno'], ['yellow', 'Giallo'], ['orange', 'Pesca'], ['pink', 'Rosa'], ['purple', 'Lavanda'], ['blue', 'Azzurro'], ['green', 'Menta']],
+  cls: k => 'pal-' + (k || 'none'),
+  close() { const p = document.getElementById('palPop'); if (p) { p.remove(); return true; } return false; },
+  open(anchor, current, onPick) {
+    if (Palette.close()) return;   // secondo tocco sullo stesso tasto: chiude
+    const pop = document.createElement('div'); pop.id = 'palPop'; pop.className = 'palpop';
+    pop.innerHTML = Palette.colors.map(([k, l]) => `<button type="button" class="palsw ${Palette.cls(k)} ${(current || '') === k ? 'on' : ''}" data-c="${k}" title="${esc(l)}" aria-label="${esc(l)}"></button>`).join('');
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 8)) + 'px';
+    pop.style.top = (r.top - h - 8 >= 8 ? r.top - h - 8 : Math.min(r.bottom + 8, innerHeight - h - 8)) + 'px';
+    const off = ev => { if (!pop.contains(ev.target) && !anchor.contains(ev.target)) done(); };
+    const key = ev => { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); done(); } };
+    const done = () => { pop.remove(); document.removeEventListener('pointerdown', off, true); document.removeEventListener('keydown', key, true); removeEventListener('scroll', done, true); };
+    pop.querySelectorAll('.palsw').forEach(b => b.onclick = ev => { ev.stopPropagation(); done(); onPick(b.dataset.c); });
+    setTimeout(() => { document.addEventListener('pointerdown', off, true); document.addEventListener('keydown', key, true); addEventListener('scroll', done, { capture: true, passive: true }); });
+  },
+};
+Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
+window.Shell = { cfg: CFG, start, version: '0.8.4' };
 })();

@@ -30,6 +30,8 @@ Shell.start({ load: async () => { S.settings = await get('/api/settings'); }, fa
 ```
 Globali disponibili: `$ esc css app S api get setLive toast openModal closeModal choose confirmDel formModal COLORS tapAndHold tapFast views viewCache navigate render`.
 
+Tavolozza comune (colori di note, schede…): 6 pastello + nessuno, `Palette.colors`. La classe `Palette.cls(chiave)` (`pal-yellow`…) dà `--pal-bg` (fondo), `--pal-line` (bordo), `--pal-acc` (elementi sopra: caselle, icone) e `--pal-ink` (segno sopra `--pal-acc`), giusti in tema chiaro e scuro. `Palette.open(tasto, scelto, k => …)` apre la scelta.
+
 Ganci di `Shell.start`: `load` (dati di base, usato anche da trascinamento e aggiornamento dal vivo), `fab`, `currency`, `onForm(form, fields, vals)`, `onNavigate(view)`, `onPull`, `onVisible`, `afterLoad`, `onTheme(t)`.
 `window.SHELL`: `name`, `csrf` (intestazione anti-CSRF), `ua` (prefisso dello user-agent dell'app Android), `home`, `fab` (sezioni col +) oppure `noFab`, `aliases` (`{accounts:'home'}`).
 

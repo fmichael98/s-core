@@ -479,6 +479,38 @@ document.addEventListener('click', e => {
   if (url) window.open(url, '_blank'); else toast('App non ancora disponibile', true);
 });
 
+// ---------------------------------------------------------------- sviluppatori: novità da testare (CHANGELOG per versione)
+/** Se l'utente è sviluppatore (is_dev da /api/me), nel menu compare "Da testare" con il numero di voci non spuntate. */
+async function devSetup() {
+  let me = null;
+  try { me = await (await fetch('/api/me', { cache: 'no-store', credentials: 'same-origin' })).json(); } catch (e) { return; }
+  if (!me || !me.is_dev) return;
+  const b = $('uDev'); if (!b) return;
+  b.hidden = false;
+  try {
+    const d = await (await fetch('/api/dev/tests', { cache: 'no-store', credentials: 'same-origin' })).json();
+    const left = (d.versions || []).reduce((n, v) => n + v.items.filter(i => !i.done).length, 0);
+    const n = $('uDevN'); n.textContent = left; n.hidden = !left;
+  } catch (e) {}
+}
+/** Finestra con le novità per versione e le spunte "testato" (salvate sul server, per utente). */
+async function devList() {
+  let d; try { d = await (await fetch('/api/dev/tests', { cache: 'no-store', credentials: 'same-origin' })).json(); } catch (e) { toast('Elenco non disponibile', true); return; }
+  const vers = d.versions || [];
+  openModal(`<h3>Da testare</h3><div class="sub">Novità e correzioni di ogni versione: spunta quelle che hai provato.</div>
+    ${vers.length ? vers.map(v => `<div class="devver"><div class="devh"><b>${esc(v.version)}</b>${v.version === d.current ? '<span class="tag">installata</span>' : ''}<span class="spacer"></span><small>${v.items.filter(i => i.done).length}/${v.items.length}</small></div>
+      ${v.items.map(i => `<label class="devit ${i.done ? 'on' : ''}"><input type="checkbox" data-v="${esc(v.version)}" data-n="${i.n}" ${i.done ? 'checked' : ''}><span>${esc(i.text)}</span></label>`).join('')}</div>`).join('')
+      : '<div class="note">Niente da testare: il registro delle novità è vuoto.</div>'}
+    <div class="btns"><button class="btn" type="button" id="devClose">Chiudi</button></div>`, 'devbox');
+  $('devClose').onclick = closeModal;
+  $('modalBox').querySelectorAll('.devit input').forEach(c => c.onchange = async () => {
+    c.closest('.devit').classList.toggle('on', c.checked);
+    try { await api('POST', '/api/dev/tests', { version: c.dataset.v, n: +c.dataset.n, done: c.checked }); } catch (e) { toast(e.message, true); c.checked = !c.checked; }
+    const h = c.closest('.devver'); h.querySelector('.devh small').textContent = `${h.querySelectorAll('input:checked').length}/${h.querySelectorAll('input').length}`;
+    const left = $('modalBox').querySelectorAll('.devit input:not(:checked)').length; const n = $('uDevN'); n.textContent = left; n.hidden = !left;
+  });
+}
+
 /** App Android: se sul server c'è una versione più nuova, in alto al posto del nome compare "Aggiorna app". */
 function showAppUpdBtn(a) {
   const brand = document.querySelector('header .brand'); if (!brand || !a || !a.newer || $('appUpdBtn')) return;
@@ -497,6 +529,7 @@ const IC = {
   out: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  check: '<rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><path d="M8 12.5l3 3 5-6"/>',
 };
 const svg = (p, c) => `<svg viewBox="0 0 24 24" class="${c || 'ic'}" aria-hidden="true">${p}</svg>`;
 let closeUserMenu = () => {}, userMenuOpen = () => false;
@@ -510,6 +543,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
       <span data-t="dark">${svg(IC.moon, 'ic sm')}</span><span data-t="light">${svg(IC.sun, 'ic sm')}</span></span></button>
     <a role="menuitem" class="uitem" href="/password">${svg(IC.key)}Cambia password</a>
     <button role="menuitem" type="button" class="uitem" id="uServer" hidden>${svg(IC.server)}Cambia server</button>
+    <button role="menuitem" type="button" class="uitem" id="uDev" hidden>${svg(IC.check)}Da testare<span class="ubadge" id="uDevN" hidden></span></button>
     <div class="usep"></div>
     <form method="post" action="/logout"><button role="menuitem" type="submit" class="uitem bad">${svg(IC.out)}Esci</button></form>`;
   document.body.appendChild(drop);
@@ -539,6 +573,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   };
   closeUserMenu = close; userMenuOpen = () => !drop.hidden && drop.classList.contains('in');
+  $('uDev').onclick = () => { close(); devList(); };
   btn.onclick = e => { e.stopPropagation(); if (userMenuOpen()) close(); else open(); };
   // chiusura: tocco/clic fuori, ridimensionamento, scorrimento della pagina
   document.addEventListener('pointerdown', e => { if (userMenuOpen() && !e.target.closest('.udrop, #uBtn')) close(); }, true);
@@ -767,10 +802,11 @@ async function start(cfg) {
   gestures();
   if (CFG.live !== false) live();   // app che fanno da sole (es. SMonitor, che interroga il server a intervalli): niente SSE
   appUpdateInfo().then(showAppUpdBtn);
+  devSetup();
   // sezioni pronte di lato per lo swipe: le preparo in sottofondo
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.6.0' };
+window.Shell = { cfg: CFG, start, version: '0.7.0' };
 })();

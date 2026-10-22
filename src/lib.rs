@@ -123,3 +123,135 @@ mod serde_json_lite {
         }
     }
 }
+
+// ---------------------------------------------------------------- novità per versione (CHANGELOG.md) e lista "da testare" degli sviluppatori
+/// Una voce del registro delle novità.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChangeItem {
+    pub version: String,
+    /// numero progressivo dentro la versione (1…)
+    pub n: u32,
+    pub text: String,
+}
+
+/// Legge un CHANGELOG.md semplice: `## 1.2.0` (eventuale testo dopo) e sotto righe `- …`. Le versioni nell'ordine del file.
+pub fn parse_changelog(md: &str) -> Vec<ChangeItem> {
+    let mut out = vec![];
+    let mut ver = String::new();
+    let mut n = 0;
+    for line in md.lines() {
+        let l = line.trim();
+        if let Some(h) = l.strip_prefix("## ") {
+            ver = h.split_whitespace().next().unwrap_or("").trim_start_matches('v').to_string();
+            n = 0;
+        } else if let Some(t) = l.strip_prefix("- ").or_else(|| l.strip_prefix("* ")) {
+            if !ver.is_empty() && !t.is_empty() {
+                n += 1;
+                out.push(ChangeItem { version: ver.clone(), n, text: t.to_string() });
+            }
+        }
+    }
+    out
+}
+
+/// Confronto di versioni "1.2.10" > "1.2.9".
+pub fn ver_gt(a: &str, b: &str) -> bool {
+    let p = |s: &str| s.split('.').map(|x| x.parse::<u64>().unwrap_or(0)).collect::<Vec<_>>();
+    let (x, y) = (p(a), p(b));
+    for i in 0..x.len().max(y.len()) {
+        let (u, v) = (x.get(i).copied().unwrap_or(0), y.get(i).copied().unwrap_or(0));
+        if u != v {
+            return u > v;
+        }
+    }
+    false
+}
+
+/// JSON del registro: `[{version, items:[{n,text}]}]`, versioni più recenti prima. Con `after` solo quelle successive a quella versione.
+pub fn changelog_json(md: &str, after: Option<&str>) -> String {
+    let items = parse_changelog(md);
+    let mut vers: Vec<String> = vec![];
+    for it in &items {
+        if !vers.contains(&it.version) {
+            vers.push(it.version.clone());
+        }
+    }
+    vers.sort_by(|a, b| if ver_gt(a, b) { std::cmp::Ordering::Less } else if ver_gt(b, a) { std::cmp::Ordering::Greater } else { std::cmp::Ordering::Equal });
+    let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', " ");
+    let mut out = String::from("[");
+    let mut first = true;
+    for v in vers {
+        if let Some(a) = after {
+            if !ver_gt(&v, a) {
+                continue;
+            }
+        }
+        if !first {
+            out.push(',');
+        }
+        first = false;
+        out.push_str(&format!("{{\"version\":\"{}\",\"items\":[", esc(&v)));
+        let mut f2 = true;
+        for it in items.iter().filter(|i| i.version == v) {
+            if !f2 {
+                out.push(',');
+            }
+            f2 = false;
+            out.push_str(&format!("{{\"n\":{},\"text\":\"{}\"}}", it.n, esc(&it.text)));
+        }
+        out.push_str("]}");
+    }
+    out.push(']');
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn changelog() {
+        let md = "# SNotes\n\n## 1.1.2\n- prima\n- seconda\n\n## 1.1.0 (ottobre)\n- vecchia\n";
+        let items = parse_changelog(md);
+        assert_eq!(items.len(), 3);
+        assert_eq!(items[2], ChangeItem { version: "1.1.0".into(), n: 1, text: "vecchia".into() });
+        assert!(ver_gt("1.1.2", "1.1.0") && !ver_gt("1.1.0", "1.1.0") && ver_gt("1.10.0", "1.9.9"));
+        assert_eq!(changelog_json(md, Some("1.1.0")), r#"[{"version":"1.1.2","items":[{"n":1,"text":"prima"},{"n":2,"text":"seconda"}]}]"#);
+        assert!(dev_tests_json("## 2.0\n- novità con «accenti» è ok\n", "2.0", &[]).contains("novità con «accenti» è ok"));
+        let j = dev_tests_json(md, "1.1.2", &[("1.1.2".into(), 2)]);
+        assert_eq!(j, r#"{"current":"1.1.2","versions":[{"version":"1.1.2","items":[{"done":false,"n":1,"text":"prima"},{"done":true,"n":2,"text":"seconda"}]},{"version":"1.1.0","items":[{"done":false,"n":1,"text":"vecchia"}]}]}"#);
+    }
+}
+
+/// Spunte "testato" degli sviluppatori: JSON `{current, versions:[{version, items:[{done,n,text}]}]}`.
+/// `done` = elenco di (versione, n) già spuntate dall'utente.
+pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)]) -> String {
+    let items = parse_changelog(md);
+    let mut vers: Vec<String> = vec![];
+    for it in &items {
+        if !vers.contains(&it.version) {
+            vers.push(it.version.clone());
+        }
+    }
+    vers.sort_by(|a, b| if ver_gt(a, b) { std::cmp::Ordering::Less } else if ver_gt(b, a) { std::cmp::Ordering::Greater } else { std::cmp::Ordering::Equal });
+    let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', " ");
+    let mut out = format!("{{\"current\":\"{}\",\"versions\":[", esc(current));
+    for (i, v) in vers.iter().enumerate() {
+        if i > 0 {
+            out.push(',');
+        }
+        out.push_str(&format!("{{\"version\":\"{}\",\"items\":[", esc(v)));
+        for (k, it) in items.iter().filter(|i| i.version == *v).enumerate() {
+            if k > 0 {
+                out.push(',');
+            }
+            let flag = done.iter().any(|(dv, n)| dv == v && *n == it.n);
+            out.push_str(&format!("{{\"done\":{},\"n\":{},\"text\":\"{}\"}}", flag, it.n, esc(&it.text)));
+        }
+        out.push_str("]}");
+    }
+    out.push_str("]}");
+    out
+}
+
+/// SQL per la tabella delle spunte (da eseguire una volta nella migrazione dell'app).
+pub const DEV_TESTS_SQL: &str = "CREATE TABLE IF NOT EXISTS dev_tests (user_id INTEGER NOT NULL, version TEXT NOT NULL, n INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (user_id, version, n));";

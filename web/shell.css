@@ -220,9 +220,11 @@ a.btn{text-decoration:none;display:inline-block;color:var(--text)}
 html.ptr-on,html.ptr-on body{overscroll-behavior-y:none}   /* niente "stretch" né ricarica del browser: il trascinamento lo gestisce il guscio */
 #ptr{position:fixed;left:50%;top:104px;z-index:8;width:40px;height:40px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);
   display:grid;place-items:center;color:var(--mute);opacity:0;transform:translate(-50%,-50px);pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
-#ptr svg{display:block;transform-origin:50% 50%;transform-box:fill-box}   /* la rotellina gira su sé stessa (senza, su alcuni Android ruota attorno a un angolo e "deriva") */
+#ptr svg{display:block}
+/* la rotellina gira dentro un contenitore HTML quadrato (origine sempre al centro: su alcuni Android l'SVG ruota attorno a un angolo e "deriva") */
+#ptr .ptrw{display:grid;place-items:center;width:22px;height:22px;transform-origin:50% 50%}
 #ptr.ready{color:var(--acc);border-color:var(--acc)}
-#ptr.spin svg{animation:ptrspin .8s linear infinite;color:var(--acc)}
+#ptr.spin .ptrw{animation:ptrspin .8s linear infinite;color:var(--acc)}
 #ptr.done{color:var(--acc-ink,#fff);background:var(--acc);border-color:var(--acc)}
 #ptr.err{color:#fff;background:var(--bad);border-color:var(--bad)}
 @keyframes ptrspin{to{transform:rotate(360deg)}}

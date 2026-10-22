@@ -19,7 +19,8 @@ const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen &
 
 // nessun campo propone testi già scritti (il riquadro dei suggerimenti chiude la tastiera nell'app)
 (function () {
-  const off = el => { if (el.matches && el.matches('input:not([type=hidden]),textarea,form') && el.getAttribute('autocomplete') !== 'off') { el.setAttribute('autocomplete', 'off'); if (el.tagName !== 'FORM') { el.setAttribute('autocorrect', 'off'); if (el.type !== 'number' && el.type !== 'date') el.setAttribute('spellcheck', 'false'); } } };
+  // (mai dentro gli editor di testo: lì una modifica agli attributi fa ridisegnare il pezzo, all'infinito)
+  const off = el => { if (el.matches && el.matches('input:not([type=hidden]),textarea,form') && el.getAttribute('autocomplete') !== 'off' && !el.closest('[contenteditable], .ProseMirror, .cm-editor, .bn-container')) { el.setAttribute('autocomplete', 'off'); if (el.tagName !== 'FORM') { el.setAttribute('autocorrect', 'off'); if (el.type !== 'number' && el.type !== 'date') el.setAttribute('spellcheck', 'false'); } } };
   const scan = root => { off(root); root.querySelectorAll && root.querySelectorAll('input,textarea,form').forEach(off); };
   scan(document.body);
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && scan(n)))).observe(document.body, { childList: true, subtree: true });

@@ -537,6 +537,8 @@ function showAppUpdBtn(a) {
 // Pulsante = avatar (da PC anche il nome); la tendina è una scheda con intestazione, tema a interruttore e voci con icona.
 // Il guscio costruisce tutto da solo dentro .umenu: le app non devono avere markup particolare.
 const IC = {
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  keyboard: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
   key: '<path d="M15 7a3 3 0 1 1-3.6 2.9L4 17.3V20h2.7l1-1V17.5h1.5V16h1.6l1.2-1.2A3 3 0 0 1 15 7z"/><circle cx="16" cy="8" r="1"/>',
   server: '<rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/>',
   out: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>',
@@ -557,6 +559,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     <a role="menuitem" class="uitem" href="/password">${svg(IC.key)}Cambia password</a>
     <button role="menuitem" type="button" class="uitem" id="uServer" hidden>${svg(IC.server)}Cambia server</button>
     <button role="menuitem" type="button" class="uitem" id="uDev" hidden>${svg(IC.check)}Da testare<span class="ubadge" id="uDevN" hidden></span></button>
+    ${(CFG.menu || []).map((m, i) => `<button role="menuitem" type="button" class="uitem" data-umenu="${i}">${svg(IC[m.icon] || IC.info)}${esc(m.label)}</button>`).join('')}
     <div class="usep"></div>
     <form method="post" action="/logout"><button role="menuitem" type="submit" class="uitem bad">${svg(IC.out)}Esci</button></form>`;
   document.body.appendChild(drop);
@@ -587,6 +590,8 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
   };
   closeUserMenu = close; userMenuOpen = () => !drop.hidden && drop.classList.contains('in');
   $('uDev').onclick = () => { close(); devList(); };
+  // voci aggiunte dall'app: SHELL.menu = [{ label, icon, run }]
+  drop.querySelectorAll('[data-umenu]').forEach(b => b.onclick = () => { close(); const m = CFG.menu[+b.dataset.umenu]; if (m && m.run) m.run(); });
   btn.onclick = e => { e.stopPropagation(); if (userMenuOpen()) close(); else open(); };
   // chiusura: tocco/clic fuori, ridimensionamento, scorrimento della pagina
   document.addEventListener('pointerdown', e => { if (userMenuOpen() && !e.target.closest('.udrop, #uBtn')) close(); }, true);

@@ -588,10 +588,11 @@ function gestures() {
       // direzione non ancora decisa: a pagina in cima e dito verso il basso il browser non deve tirare la pagina (effetto "stretch" di Android)
       if (my > 0 && window.scrollY <= 0 && e.cancelable) e.preventDefault();
       if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;   // decido la direzione dopo pochi pixel: lo swipe risponde subito
-      if (Math.abs(mx) > Math.abs(my) * 0.8) {
+      // o verticale o orizzontale, mai in diagonale: vince la direzione più "forte" (orizzontale solo se nettamente tale)
+      if (Math.abs(mx) > Math.abs(my) * 1.3) {
         // orizzontale: non dal bordo estremo (lì resta il gesto "indietro" del telefono)
         const w = W(); mode = (x0 > w * 0.1 && x0 < w * 0.9) ? 'swipe' : 'none';
-      } else mode = (my > 0 && window.scrollY <= 0) ? 'pull' : 'none';
+      } else mode = (my > 0 && window.scrollY <= 0 && Math.abs(my) > Math.abs(mx) * 1.3) ? 'pull' : 'none';
     }
     if (mode === 'pull') {
       if (my <= 0 || window.scrollY > 0) { if (d) set(0, true); d = 0; return; }
@@ -745,5 +746,5 @@ async function start(cfg) {
 }
 
 Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.14' };
+window.Shell = { cfg: CFG, start, version: '0.5.15' };
 })();

@@ -396,6 +396,93 @@ window.addEventListener('scroll', e => { if (xselCur && !(e.target && e.target.c
 // clic sull'etichetta del campo: apre la tendina (come faceva il select)
 document.addEventListener('click', e => { const l = e.target.closest('label'); if (!l) return; const s = l.querySelector('select.xsel-native') || (l.htmlFor && $(l.htmlFor)); if (s && s._xbtn && !e.target.closest('.xsel-btn')) { e.preventDefault(); xselOpen(s); } });
 
+
+// ---------------------------------------------------------------- campo con suggerimenti (combobox)
+/** Combo.attach(input, items, opts): scrivendo filtra l'elenco e completa la prima voce che inizia così;
+ *  ↑/↓ scelgono, Invio o Tab confermano, Esc annulla, clic su una voce la sceglie. L'elenco si apre sotto al campo.
+ *  items: [{ v, t, color?, sub? }]
+ *  opts: { value (v di partenza), allowEmpty (voce "nessuno"), emptyLabel, placeholder,
+ *          onPick(item|null, how) how = 'Enter' | 'ShiftEnter' | 'Tab' | 'ShiftTab' | 'click' | 'blur', onCancel() }
+ *  Ritorna { close() }. */
+const Combo = (function () {
+  const norm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  function attach(input, items, opts) {
+    opts = opts || {};
+    const all = (opts.allowEmpty ? [{ v: null, t: opts.emptyLabel || 'nessuno', empty: true }] : []).concat(items);
+    const start = all.find(x => !x.empty && x.v === opts.value);
+    let list = all, hi = 0, done = false, typed = '';
+    const pop = document.createElement('div'); pop.className = 'xsel-pop combo-pop' + (document.documentElement.clientWidth <= 640 ? ' touch' : ''); pop.setAttribute('role', 'listbox');
+    document.body.appendChild(pop);
+    input.setAttribute('autocomplete', 'off'); input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'true');
+    if (opts.placeholder) input.placeholder = opts.placeholder;
+    input.value = start ? start.t : '';
+    const place = () => {
+      const r = input.getBoundingClientRect(), vh = window.innerHeight;
+      pop.style.minWidth = Math.max(r.width, 180) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, document.documentElement.clientWidth - pop.offsetWidth - 8)) + 'px';
+      pop.style.top = pop.style.bottom = ''; pop.classList.remove('up');
+      const below = vh - r.bottom - 12, above = r.top - 12;
+      if (below >= Math.min(pop.scrollHeight, 220) || below >= above) { pop.style.top = (r.bottom + 4) + 'px'; pop.style.maxHeight = Math.max(140, below) + 'px'; }
+      else { pop.style.bottom = (vh - r.top + 4) + 'px'; pop.style.maxHeight = Math.max(140, above) + 'px'; pop.classList.add('up'); }
+    };
+    const draw = () => {
+      pop.innerHTML = list.length ? list.map((x, i) => `<button type="button" role="option" tabindex="-1" class="xsel-o${i === hi ? ' hi' : ''}${x.empty ? ' empty' : ''}${start && x.v === start.v && !x.empty ? ' on' : ''}" data-i="${i}"><span>${x.color ? `<i class="combo-dot" style="background:${esc(x.color)}"></i>` : ''}${esc(x.t)}</span>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</button>`).join('')
+        : '<div class="combo-none">nessuna corrispondenza</div>';
+      place();
+      const h = pop.querySelector('.xsel-o.hi'); if (h) h.scrollIntoView({ block: 'nearest' });
+    };
+    const filter = q => {
+      const n = norm(q);
+      if (!n) { list = all; hi = Math.max(0, start ? all.indexOf(start) : 0); return; }
+      const pre = all.filter(x => !x.empty && norm(x.t).startsWith(n)), mid = all.filter(x => !x.empty && !norm(x.t).startsWith(n) && norm(x.t).includes(n));
+      list = pre.concat(mid); hi = 0;
+    };
+    const finish = (item, how) => { if (done) return; done = true; close(); if (opts.onPick) opts.onPick(item ? (item.empty ? null : item) : null, how); };
+    const cancel = () => { if (done) return; done = true; close(); if (opts.onCancel) opts.onCancel(); };
+    function close() { pop.remove(); input.setAttribute('aria-expanded', 'false'); window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); }
+    input.addEventListener('input', e => {
+      const v = input.value;
+      typed = (input.selectionEnd === v.length && input.selectionStart < v.length) ? v.slice(0, input.selectionStart) : v;
+      filter(typed);
+      // completamento in linea: la prima voce che inizia con quanto scritto, il resto selezionato
+      const ins = !e.inputType || e.inputType.startsWith('insert');
+      const first = list[0];
+      if (ins && typed && first && !first.empty && norm(first.t).startsWith(norm(typed)) && first.t.length > typed.length) {
+        input.value = first.t; input.setSelectionRange(typed.length, first.t.length);   // con le maiuscole giuste della voce
+      }
+      draw();
+    });
+    input.addEventListener('keydown', e => {
+      if (done) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); if (!list.length) return;
+        hi = (hi + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length;
+        const it = list[hi]; input.value = it.empty ? '' : it.t; input.select(); draw();
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        const how = (e.shiftKey ? 'Shift' : '') + e.key;
+        if (!input.value.trim() && opts.allowEmpty) return finish(null, how);
+        const it = list[hi];
+        if (it) finish(it, how); else cancel();
+      } else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
+    });
+    input.addEventListener('blur', () => setTimeout(() => {
+      if (done || document.activeElement === input) return;
+      const v = norm(input.value);
+      if (!v && opts.allowEmpty) return finish(null, 'blur');
+      const exact = all.find(x => !x.empty && norm(x.t) === v);
+      if (exact) finish(exact, 'blur'); else cancel();
+    }, 0));
+    pop.addEventListener('pointerdown', e => e.preventDefault());   // il campo resta attivo: il clic sceglie, non annulla
+    pop.addEventListener('click', e => { const b = e.target.closest('.xsel-o'); if (b) finish(list[+b.dataset.i], 'click'); });
+    window.addEventListener('scroll', place, true); window.addEventListener('resize', place);
+    filter(''); draw(); requestAnimationFrame(() => pop.classList.add('in'));
+    input.focus(); input.select();
+    return { close: cancel };
+  }
+  return { attach };
+})();
+
 // ---------------------------------------------------------------- navigazione
 const views = {};
 const viewCache = {};   // ultimo HTML di ogni sezione (già riempito): lo swipe mostra subito quello
@@ -882,5 +969,6 @@ const Palette = {
   },
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.9.3' };
+window.Combo = Combo;
+window.Shell = { cfg: CFG, start, version: '0.9.4' };
 })();

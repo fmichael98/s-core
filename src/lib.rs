@@ -216,15 +216,16 @@ mod tests {
         assert_eq!(items[2], ChangeItem { version: "1.1.0".into(), n: 1, text: "vecchia".into() });
         assert!(ver_gt("1.1.2", "1.1.0") && !ver_gt("1.1.0", "1.1.0") && ver_gt("1.10.0", "1.9.9"));
         assert_eq!(changelog_json(md, Some("1.1.0")), r#"[{"version":"1.1.2","items":[{"n":1,"text":"prima"},{"n":2,"text":"seconda"}]}]"#);
-        assert!(dev_tests_json("## 2.0\n- novità con «accenti» è ok\n", "2.0", &[]).contains("novità con «accenti» è ok"));
-        let j = dev_tests_json(md, "1.1.2", &[("1.1.2".into(), 2)]);
-        assert_eq!(j, r#"{"current":"1.1.2","versions":[{"version":"1.1.2","items":[{"done":false,"n":1,"text":"prima"},{"done":true,"n":2,"text":"seconda"}]},{"version":"1.1.0","items":[{"done":false,"n":1,"text":"vecchia"}]}]}"#);
+        assert!(dev_tests_json("## 2.0\n- novità con «accenti» è ok\n", "2.0", &[], &[]).contains("novità con «accenti» è ok"));
+        let j = dev_tests_json(md, "1.1.2", &[("1.1.2".into(), 2)], &[("1.1.2".into(), 1700000000)]);
+        assert_eq!(j, r#"{"current":"1.1.2","versions":[{"version":"1.1.2","installed":1700000000,"items":[{"done":false,"n":1,"text":"prima"},{"done":true,"n":2,"text":"seconda"}]},{"version":"1.1.0","installed":0,"items":[{"done":false,"n":1,"text":"vecchia"}]}]}"#);
     }
 }
 
 /// Spunte "testato" degli sviluppatori: JSON `{current, versions:[{version, items:[{done,n,text}]}]}`.
 /// `done` = elenco di (versione, n) già spuntate dall'utente.
-pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)]) -> String {
+/// `installed`: (versione, secondi unix della prima partenza) dalla tabella `app_versions` (vedi [`RECORD_VERSION_SQL`]).
+pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)], installed: &[(String, i64)]) -> String {
     let items = parse_changelog(md);
     let mut vers: Vec<String> = vec![];
     for it in &items {
@@ -239,7 +240,8 @@ pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)]) -> String
         if i > 0 {
             out.push(',');
         }
-        out.push_str(&format!("{{\"version\":\"{}\",\"items\":[", esc(v)));
+        let at = installed.iter().find(|(iv, _)| iv == v).map(|(_, t)| *t).unwrap_or(0);
+        out.push_str(&format!("{{\"version\":\"{}\",\"installed\":{at},\"items\":[", esc(v)));
         for (k, it) in items.iter().filter(|i| i.version == *v).enumerate() {
             if k > 0 {
                 out.push(',');
@@ -254,4 +256,7 @@ pub fn dev_tests_json(md: &str, current: &str, done: &[(String, u32)]) -> String
 }
 
 /// SQL per la tabella delle spunte (da eseguire una volta nella migrazione dell'app).
-pub const DEV_TESTS_SQL: &str = "CREATE TABLE IF NOT EXISTS dev_tests (user_id INTEGER NOT NULL, version TEXT NOT NULL, n INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (user_id, version, n));";
+pub const DEV_TESTS_SQL: &str = "CREATE TABLE IF NOT EXISTS dev_tests (user_id INTEGER NOT NULL, version TEXT NOT NULL, n INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (user_id, version, n));
+CREATE TABLE IF NOT EXISTS app_versions (version TEXT PRIMARY KEY, installed INTEGER NOT NULL);";
+/// Segna quando una versione è stata installata (prima partenza): `execute(RECORD_VERSION_SQL, params![versione, adesso])` all'avvio.
+pub const RECORD_VERSION_SQL: &str = "INSERT OR IGNORE INTO app_versions(version, installed) VALUES (?1, ?2)";

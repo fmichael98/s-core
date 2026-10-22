@@ -494,11 +494,13 @@ async function devSetup() {
   } catch (e) {}
 }
 /** Finestra con le novità per versione e le spunte "testato" (salvate sul server, per utente). */
+/** data e ora brevi (es. "22/10 14:05") da secondi unix */
+function fmtDT(t) { return new Date(t * 1000).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ''); }
 async function devList() {
   let d; try { d = await (await fetch('/api/dev/tests', { cache: 'no-store', credentials: 'same-origin' })).json(); } catch (e) { toast('Elenco non disponibile', true); return; }
   const vers = d.versions || [];
   openModal(`<h3>Da testare</h3><div class="sub">Novità e correzioni di ogni versione: spunta quelle che hai provato.</div>
-    ${vers.length ? vers.map(v => `<div class="devver"><div class="devh"><b>${esc(v.version)}</b>${v.version === d.current ? '<span class="tag">installata</span>' : ''}<span class="spacer"></span><small>${v.items.filter(i => i.done).length}/${v.items.length}</small></div>
+    ${vers.length ? vers.map(v => `<div class="devver"><div class="devh"><b>${esc(v.version)}</b>${v.version === d.current ? '<span class="tag">installata</span>' : ''}${v.installed ? `<small class="devd" title="installata il">${fmtDT(v.installed)}</small>` : ''}<span class="spacer"></span><small>${v.items.filter(i => i.done).length}/${v.items.length}</small></div>
       ${v.items.map(i => `<label class="devit ${i.done ? 'on' : ''}"><input type="checkbox" data-v="${esc(v.version)}" data-n="${i.n}" ${i.done ? 'checked' : ''}><span>${esc(i.text)}</span></label>`).join('')}</div>`).join('')
       : '<div class="note">Niente da testare: il registro delle novità è vuoto.</div>'}
     <div class="btns"><button class="btn" type="button" id="devClose">Chiudi</button></div>`, 'devbox');

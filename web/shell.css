@@ -153,13 +153,14 @@ a.kv:hover span:first-child{color:var(--acc)}
 .msg{font-size:13px;min-height:18px;margin-top:10px}.msg.bad{color:var(--bad)}.msg.good{color:var(--ok)}
 
 /* modale */
-.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;place-items:center;padding:16px}
-.modal.open{display:grid}
+/* scorre l'intero velo, non il riquadro: così la barra di scorrimento sta al bordo della finestra, lontana dal testo */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;flex-direction:column;align-items:center;padding:16px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.modal.open{display:flex}
 .modal.open .box{animation:mIn .16s ease-out}
 @keyframes mIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.modal .box{--boxpad:22px;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--boxpad)}
+.modal .box{--boxpad:22px;width:min(520px,100%);flex:none;margin:auto 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--boxpad)}
 /* i tasti in fondo (Salva/Chiudi…) restano sempre a vista: il contenuto scorre, loro no */
-.modal .btns{position:sticky;bottom:calc(-1 * var(--boxpad));background:var(--panel);padding:12px 0 var(--boxpad);margin-bottom:calc(-1 * var(--boxpad));z-index:1}
+.modal .btns{position:sticky;bottom:16px;background:var(--panel);padding:12px 0 var(--boxpad);margin-bottom:calc(-1 * var(--boxpad));z-index:1;border-radius:0 0 12px 12px}
 .modal h3{margin:0 0 4px;font-size:17px}
 .modal .box.wide{width:min(900px,100%)}
 .modal .sub{color:var(--mute);font-size:12px;margin-bottom:14px}
@@ -351,7 +352,7 @@ html.modal-on,html.modal-on body{overflow:hidden;overscroll-behavior:none}
 .ubadge{margin-left:auto;background:var(--acc);color:var(--acc-ink,#fff);font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px}
 .modal .box.devbox{width:min(640px,100%)}
 .devver{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.devh{display:flex;align-items:center;gap:8px;margin-bottom:6px}.devh b{font-size:14px}.devh small{color:var(--mute)}
+.devh{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}.devh b{font-size:14px}.devh small{color:var(--mute)}.devh .devd{font-size:11.5px}
 .devit{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer;text-transform:none;letter-spacing:0}
 .devit input{margin:3px 0 0;accent-color:var(--acc);flex:none;width:16px;height:16px}
 .devit.on span{color:var(--mute);text-decoration:line-through}

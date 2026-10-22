@@ -13,7 +13,9 @@
 (function () {
 'use strict';
 
-const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, unit: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true, events: '/api/events' }, window.SHELL || {});
+const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, unit: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true, events: '/api/events', bare: false }, window.SHELL || {});
+// bare: true → app a pagina unica (es. SMap, una mappa a tutto schermo): niente sezioni (#view, nav, #sezione), niente gesti
+// di scorrimento né SSE del guscio; restano menu utente, tema, finestre, avvisi, api, aggiornamento app.
 const H = {};   // ganci dell'app (da Shell.start)
 const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen && H.modalOpen());   // finestra del guscio o finestre proprie dell'app
 
@@ -423,10 +425,11 @@ function navigate() {
   if (skipNextRender) { skipNextRender = false; return; }   // lo swipe ha già disegnato la sezione
   render().then(() => { if (changed) window.scrollTo(0, scrollPos[S.view] || 0); });
 }
-window.addEventListener('hashchange', () => { if (!swipeHash) closeModal(); swipeHash = false; navigate(); });
+window.addEventListener('hashchange', () => { if (CFG.bare) return; if (!swipeHash) closeModal(); swipeHash = false; navigate(); });
 // passare da una sezione all'altra (pillole in alto, link interni "#sezione") sostituisce l'indirizzo invece di aggiungerne uno:
 // Indietro (browser o app) non ripercorre le sezioni, chiude le finestre o esce
 document.addEventListener('click', e => {
+  if (CFG.bare) return;
   const a = e.target.closest('a[href^="#"]'); if (!a || e.defaultPrevented || e.ctrlKey || e.metaKey) return;
   const h = a.getAttribute('href'); if (h.length < 2) return;
   e.preventDefault(); if (location.hash !== h) location.replace(h);
@@ -458,7 +461,7 @@ function patchKeeping(el, html, keep) {
 }
 async function renderNow() {
   const gen = ++renderGen;
-  const el = $('view');
+  const el = $('view'); if (!el) return;
   try {
     const html = await views[S.view](gen);
     if (gen !== renderGen) return;
@@ -824,7 +827,8 @@ function live() {
 }
 
 // ---------------------------------------------------------------- avvio
-/** cfg: { load: async () => {…dati di base…}, currency: () => '€', onForm(form, fields, vals), onNavigate(view),
+/** Con SHELL.bare: solo load → menu utente (setUserMenu), afterLoad, pulsante "Aggiorna app", voci sviluppatore.
+ *  cfg: { load: async () => {…dati di base…}, currency: () => '€', onForm(form, fields, vals), onNavigate(view),
  *         onPull: async () => {…}, onVisible: () => {…}, afterLoad: () => {…}, onTheme(t), fab: () => {…},
  *         modalOpen: () => bool (finestre proprie dell'app aperte: niente gesti né ridisegni) } */
 async function start(cfg) {
@@ -832,8 +836,9 @@ async function start(cfg) {
   if (!H.load) H.load = async () => { S.settings = await get('/api/settings'); };
   const fab = $('fab'); if (fab && H.fab) { fab.onclick = H.fab; tapFast(fab); }
   try { await H.load(); if (S.settings && S.settings.username && window.setUserMenu) setUserMenu(S.settings.username); setLive(true); }
-  catch (e) { $('view').innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; return; }
+  catch (e) { const v = $('view'); if (v) v.innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; else toast(e.message, true); return; }
   if (H.afterLoad) try { H.afterLoad(); } catch (e) { console.error(e); }
+  if (CFG.bare) { document.documentElement.classList.add('bare'); appUpdateInfo().then(showAppUpdBtn); devSetup(); return; }
   navigate();
   gestures();
   if (CFG.live !== false) live();   // app che fanno da sole (es. SMonitor, che interroga il server a intervalli): niente SSE
@@ -867,5 +872,5 @@ const Palette = {
   },
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.8.4' };
+window.Shell = { cfg: CFG, start, version: '0.9.0' };
 })();

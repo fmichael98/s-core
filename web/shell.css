@@ -10,6 +10,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
+html.bare body{padding-bottom:0}   /* app a pagina unica (SHELL.bare): niente spazio per il pulsante + */
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Ubuntu,Roboto,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 a{color:var(--acc)}
 /* testi da copiare con un clic o un tocco (data-copy): manina, niente sottolineature */

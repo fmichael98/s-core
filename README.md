@@ -33,7 +33,9 @@ Globali disponibili: `$ esc css app S api get setLive toast openModal closeModal
 Tavolozza comune (colori di note, schede…): 6 pastello + nessuno, `Palette.colors`. La classe `Palette.cls(chiave)` (`pal-yellow`…) dà `--pal-bg` (fondo), `--pal-line` (bordo), `--pal-acc` (elementi sopra: caselle, icone) e `--pal-ink` (segno sopra `--pal-acc`), giusti in tema chiaro e scuro. `Palette.open(tasto, scelto, k => …)` apre la scelta.
 
 Ganci di `Shell.start`: `load` (dati di base, usato anche da trascinamento e aggiornamento dal vivo), `fab`, `currency`, `onForm(form, fields, vals)`, `onNavigate(view)`, `onPull`, `onVisible`, `afterLoad`, `onTheme(t)`.
-`window.SHELL`: `name`, `csrf` (intestazione anti-CSRF), `ua` (prefisso dello user-agent dell'app Android), `home`, `fab` (sezioni col +) oppure `noFab`, `aliases` (`{accounts:'home'}`).
+`window.SHELL`: `name`, `csrf` (intestazione anti-CSRF), `ua` (prefisso dello user-agent dell'app Android), `home`, `fab` (sezioni col +) oppure `noFab`, `aliases` (`{accounts:'home'}`), `live:false` (niente SSE), `menu` (voci in più nel menu utente `[{label, icon, run}]`).
+
+App a pagina unica (es. SMap, mappa a tutto schermo): `window.SHELL = { name:'SMap', csrf:'X-SMap', bare:true }`. Con `bare` il guscio non gestisce sezioni (`#view`, `nav`, `#sezione`), gesti né SSE: `Shell.start({ load, afterLoad, onTheme })` carica i dati, riempie il menu utente, mostra "Aggiorna app" e le voci sviluppatore. Servono solo `.top header` con `.brand` e `.umenu`, `#modal/#modalBox`, `#toast`; `html.bare` toglie lo spazio in fondo alla pagina.
 
 ## Rilascio
 Alza `version` in Cargo.toml, commit, tag `vX.Y.Z`, push. Le app scelgono quando passare al tag nuovo.

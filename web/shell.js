@@ -606,6 +606,8 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     if (focusBtn) btn.focus();
   };
   const open = () => {
+    // tema gestito dall'app (CFG.theme = { label(), cycle() }, es. SMap: chiaro/scuro/automatico): voce con la sua scritta
+    if (CFG.theme) { const l = drop.querySelector('#uThemeRow .ulbl'); if (l) l.lastChild.nodeValue = CFG.theme.label ? CFG.theme.label() : 'Tema'; }
     place(); drop.hidden = false; requestAnimationFrame(() => drop.classList.add('in'));
     btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
   };
@@ -625,7 +627,7 @@ let closeUserMenu = () => {}, userMenuOpen = () => false;
     if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
     if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   });
-  $('uThemeRow').onclick = e => { e.stopPropagation(); setTheme(theme() === 'light' ? 'dark' : 'light'); };
+  $('uThemeRow').onclick = e => { e.stopPropagation(); if (CFG.theme) { CFG.theme.cycle(); showTheme(); const l = drop.querySelector('#uThemeRow .ulbl'); if (l && CFG.theme.label) l.lastChild.nodeValue = CFG.theme.label(); return; } setTheme(theme() === 'light' ? 'dark' : 'light'); };
   if (app && app.changeServer) { $('uServer').hidden = false; $('uServer').onclick = () => { close(); app.changeServer(); }; }
   window.setUserMenu = name => {
     if (!name) return; const ini = name.slice(0, 1).toUpperCase();
@@ -872,5 +874,5 @@ const Palette = {
   },
 };
 Object.assign(window, { Palette, $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, backdropClose, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.9.0' };
+window.Shell = { cfg: CFG, start, version: '0.9.1' };
 })();

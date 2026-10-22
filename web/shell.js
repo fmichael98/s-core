@@ -13,7 +13,7 @@
 (function () {
 'use strict';
 
-const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true, events: '/api/events' }, window.SHELL || {});
+const CFG = Object.assign({ name: 'App', csrf: 'X-App', ua: null, unit: null, home: 'home', fab: null, noFab: [], aliases: {}, live: true, events: '/api/events' }, window.SHELL || {});
 const H = {};   // ganci dell'app (da Shell.start)
 const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen && H.modalOpen());   // finestra del guscio o finestre proprie dell'app
 
@@ -453,6 +453,32 @@ async function appUpdateInfo() {
   const mine = appVersion(); if (!mine) return null;
   try { const s = await get('/api/app'); return { mine, server: s.version, newer: s.version && verGt(s.version, mine), size: s.size }; } catch (e) { return null; }
 }
+// ---------------------------------------------------------------- "altre app" (catalogo pubblicato da SMonitor)
+/** HTML del riquadro "Altre app" per le Impostazioni (vuoto se il catalogo non c'è o non include questa app).
+ *  Icona = iniziale su riquadro colorato. Nell'app Android: installata → si apre, altrimenti si scarica l'APK;
+ *  nel browser si scarica. */
+async function otherApps() {
+  let list = [];
+  try { list = await (await fetch(CFG.appsUrl || '/api/apps', { cache: 'no-store', credentials: 'same-origin' })).json(); } catch (e) { return ''; }
+  if (!Array.isArray(list)) return '';
+  // questa app: SHELL.unit (es. "smoney.service"), altrimenti dal nome
+  const me = CFG.unit || (CFG.name || '').toLowerCase() + '.service';
+  const apps = list.filter(a => a.unit !== me && (!a.show_in || !a.show_in.trim() || a.show_in.split(',').map(x => x.trim()).includes(me)));
+  if (!apps.length) return '';
+  const inst = a => { try { return !!(app && app.isInstalled && a.pkg && app.isInstalled(a.pkg)); } catch (e) { return false; } };
+  return `<section class="panel oapps"><div class="chead"><b>Altre app</b></div>
+    <div class="oapps-grid">${apps.map(a => `<button type="button" class="oapp" data-id="${esc(a.id)}" data-pkg="${esc(a.pkg || '')}" data-url="${esc(a.url || '')}" data-apk="${a.apk ? '1' : ''}" title="${inst(a) ? 'Apri ' + esc(a.name) : a.apk ? 'Scarica ' + esc(a.name) : esc(a.name)}">
+      <span class="oapp-ic" style="background:${esc(a.color || '#7d8894')}">${esc((a.name || '?').replace(/^S/, '').slice(0, 1).toUpperCase())}</span>
+      <span class="oapp-n">${esc(a.name)}</span><small>${inst(a) ? 'installata' : a.apk ? 'scarica' : 'sul server'}</small></button>`).join('')}</div></section>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.oapp'); if (!b) return;
+  const { id, pkg, url, apk } = b.dataset;
+  if (app && app.isInstalled && pkg && app.isInstalled(pkg)) { app.openApp(pkg, url || ''); return; }
+  if (apk) { toast('Scarico l\'app…'); if (app && app.updateApp) app.updateApp('/api/apps/' + id + '.apk'); else location.href = '/api/apps/' + id + '.apk'; return; }
+  if (url) window.open(url, '_blank'); else toast('App non ancora disponibile', true);
+});
+
 /** App Android: se sul server c'è una versione più nuova, in alto al posto del nome compare "Aggiorna app". */
 function showAppUpdBtn(a) {
   const brand = document.querySelector('header .brand'); if (!brand || !a || !a.newer || $('appUpdBtn')) return;
@@ -745,6 +771,6 @@ async function start(cfg) {
   if ('ontouchstart' in window) setTimeout(() => { [...document.querySelectorAll('nav a')].map(a => a.dataset.v).filter(v => v !== S.view).forEach(v => Promise.resolve().then(() => views[v](0)).then(h => { if (typeof h === 'string' && !viewCache[v]) viewCache[v] = h; }).catch(() => {})); }, 1500);
 }
 
-Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
-window.Shell = { cfg: CFG, start, version: '0.5.15' };
+Object.assign(window, { $, esc, css, app, S, api, get, setLive, toast, copyText, otherApps, openModal, closeModal, closeTop, choose, confirmDel, formModal, COLORS, tapAndHold, tapFast, views, viewCache, navigate, render, appVersion, verGt, appUpdateInfo });
+window.Shell = { cfg: CFG, start, version: '0.6.0' };
 })();

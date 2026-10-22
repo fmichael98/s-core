@@ -336,3 +336,11 @@ html.modal-on,html.modal-on body{overflow:hidden;overscroll-behavior:none}
 .modal{overscroll-behavior:contain;touch-action:none}
 .modal .box{overscroll-behavior:contain;touch-action:pan-y}
 .modal .box *{touch-action:pan-y}
+
+/* "altre app" nelle Impostazioni */
+.oapps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
+.oapp{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border:1px solid transparent;border-radius:12px;background:none;color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.oapp:hover{border-color:var(--line);background:var(--panel2)}
+.oapp-ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:24px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.oapp-n{font-size:12.5px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oapp small{font-size:10.5px;color:var(--mute)}

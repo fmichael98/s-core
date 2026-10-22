@@ -25,6 +25,23 @@ const anyModal = () => $('modal').classList.contains('open') || !!(H.modalOpen &
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && scan(n)))).observe(document.body, { childList: true, subtree: true });
 })();
 
+// App Android: le barre di sistema (stato in cima, navigazione in fondo) prendono il colore della pagina che c'è sotto
+(function () {
+  const A = window.AndroidApp; if (!A || !A.barColors) return;
+  const hex = c => { const m = String(c).match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?/); if (!m || (m[4] != null && +m[4] === 0)) return null; return '#' + [m[1], m[2], m[3]].map(v => (+v).toString(16).padStart(2, '0')).join(''); };
+  const colorAt = y => {
+    let el = document.elementFromPoint(innerWidth / 2, y);
+    while (el && el !== document.documentElement) { const h = hex(getComputedStyle(el).backgroundColor); if (h) return h; el = el.parentElement; }
+    return hex(getComputedStyle(document.body).backgroundColor) || '#0d1014';
+  };
+  let last = '', t = null;
+  const sync = () => { t = null; const top = colorAt(1), bottom = colorAt(innerHeight - 2), k = top + bottom; if (k !== last) { last = k; try { A.barColors(top, bottom); } catch (e) {} } };
+  const later = () => { if (!t) t = setTimeout(sync, 120); };
+  new MutationObserver(later).observe(document.documentElement, { attributes: true, subtree: true, childList: true, attributeFilter: ['class', 'style', 'data-theme', 'hidden'] });
+  addEventListener('resize', later); addEventListener('scroll', later, { passive: true }); addEventListener('load', later);
+  later();
+})();
+
 // animazioni continue (rotelline, pulsazioni): tutte agganciate allo stesso orologio della pagina, così quando
 // un aggiornamento ridisegna il pezzo l'animazione prosegue dal punto in cui era invece di ripartire da capo
 (function () {

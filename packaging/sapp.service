@@ -1,0 +1,29 @@
+[Unit]
+Description=SApp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sapp
+Group=sapp
+ExecStart=/usr/local/bin/sapp --config /etc/sapp/config.toml
+# ora italiana: date, scadenze e promemoria si calcolano sull'ora di qui (anche se il server è in UTC)
+Environment=TZ=Europe/Rome
+StateDirectory=sapp
+StateDirectoryMode=0750
+Restart=on-failure
+RestartSec=3
+
+# sicurezza
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

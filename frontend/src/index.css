@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tema di shadcn/ui (grigi neutri) con il colore dell'app come principale (--primary e --ring, in chiaro e in scuro).
+   Qui il blu di esempio; le app: STurni verde acqua, SGarage lime (#A3E635), SCalendar viola (#8D50E9). */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.546 0.245 262.881 / 60%);
+  /* colori di stato (in regola, in scadenza, scaduto, informazione) */
+  --warn: oklch(0.666 0.157 58);
+  --info: oklch(0.546 0.215 262.881);
+  --vio: oklch(0.541 0.25 293);
+  --ok: oklch(0.596 0.145 163);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.707 0.165 254.624);
+  --primary-foreground: oklch(0.282 0.091 267.935);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.707 0.165 254.624 / 60%);
+  --warn: oklch(0.828 0.189 84.429);
+  --info: oklch(0.707 0.165 254.624);
+  --vio: oklch(0.714 0.203 305.504);
+  --ok: oklch(0.765 0.177 163.223);
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-warn: var(--warn);
+  --color-info: var(--info);
+  --color-vio: var(--vio);
+  --color-ok: var(--ok);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* barre di scorrimento sottili, nei colori del tema; da telefono si scorre ma non si ingrandisce (due dita, doppio tocco) */
+  * {
+    touch-action: pan-x pan-y;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------------------------------------------------------------- tavolozza degli utenti (8 colori di Tailwind)
+   .pal-<colore> dà --pal (colore pieno, per pallini e iniziali) e --pal-ink (testo sopra): in chiaro la tinta piena
+   (600/700) col testo bianco, in scuro il pastello (300) col testo scuro. */
+.pal-rose { --pal: oklch(58.6% 0.253 17.585); --pal-ink: #fff; }
+.pal-orange { --pal: oklch(70.5% 0.213 47.604); --pal-ink: #1b1b1b; }
+.pal-yellow { --pal: oklch(55.4% 0.135 66.442); --pal-ink: #fff; }
+.pal-lime { --pal: oklch(53.2% 0.157 131.589); --pal-ink: #fff; }
+.pal-green { --pal: oklch(62.7% 0.194 149.214); --pal-ink: #fff; }
+.pal-sky { --pal: oklch(58.8% 0.158 241.966); --pal-ink: #fff; }
+.pal-blue { --pal: oklch(54.6% 0.245 262.881); --pal-ink: #fff; }
+.pal-violet { --pal: oklch(54.1% 0.281 293.009); --pal-ink: #fff; }
+.pal-fuchsia { --pal: oklch(59.1% 0.293 322.896); --pal-ink: #fff; }
+.dark .pal-rose, .dark.pal-rose { --pal: oklch(81% 0.117 11.638); --pal-ink: #1b1b1b; }
+.dark .pal-orange, .dark.pal-orange { --pal: oklch(83.7% 0.128 66.29); --pal-ink: #1b1b1b; }
+.dark .pal-yellow, .dark.pal-yellow { --pal: oklch(90.5% 0.182 98.111); --pal-ink: #1b1b1b; }
+.dark .pal-lime, .dark.pal-lime { --pal: oklch(89.7% 0.196 126.665); --pal-ink: #1b1b1b; }
+.dark .pal-green, .dark.pal-green { --pal: oklch(87.1% 0.15 154.449); --pal-ink: #1b1b1b; }
+.dark .pal-sky, .dark.pal-sky { --pal: oklch(82.8% 0.111 230.318); --pal-ink: #1b1b1b; }
+.dark .pal-blue, .dark.pal-blue { --pal: oklch(80.9% 0.105 251.813); --pal-ink: #1b1b1b; }
+.dark .pal-violet, .dark.pal-violet { --pal: oklch(81.1% 0.111 293.571); --pal-ink: #1b1b1b; }
+.dark .pal-fuchsia, .dark.pal-fuchsia { --pal: oklch(83.3% 0.145 321.434); --pal-ink: #1b1b1b; }
+
+/* trascina in giù per aggiornare: niente ricarica nativa del browser */
+html.ptr-on, html.ptr-on body { overscroll-behavior-y: none; }
+
+/* scorre senza barra (es. la legenda su una riga) */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* apertura e chiusura dei pannelli dal basso (telefono) */
+@keyframes sheet-up { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }

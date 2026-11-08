@@ -1,0 +1,9 @@
+[Unit]
+Description=SApp - attende aggiornamenti caricati dalla pagina web
+
+[Path]
+PathExists=/var/lib/sapp/update/ready
+Unit=sapp-update.service
+
+[Install]
+WantedBy=multi-user.target

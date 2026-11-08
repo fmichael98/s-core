@@ -1,0 +1,18 @@
+[package]
+name = "sapp-app"
+description = "SApp: casi d'uso e porte (cosa serve dal mondo esterno), senza sapere come è fatto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sapp-domain = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# prove dei casi d'uso con gli adattatori veri (SQLite in memoria): in tests/, così c'è una copia sola di questo crate
+sapp-sqlite = { workspace = true }
+sapp-system = { workspace = true }

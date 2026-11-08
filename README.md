@@ -1,43 +1,32 @@
 # s-core
 
-Guscio comune delle app S* (SMoney, SHealth, SCalendar, SMonitor): quello che prima era copiato in ogni app sta qui, una volta sola.
+La raccolta di quello che hanno in comune le app della famiglia S (STurni, SGarage, SCalendar…): server, pagina
+web, pacchetto e rilascio. Le app nuove nascono da qui, quelle esistenti ci prendono i pezzi.
 
-**Tappa 1 (questa):** parte web — barra in alto con sezioni a pillola, menu utente (tema, password, server, esci),
-gesti (trascina in giù = aggiorna, swipe = cambia sezione, + pronto), finestre (modale, scelta, form), avvisi,
-aggiornamento dal vivo (SSE con riconnessione), ricarica automatica quando il server cambia versione, pulsante "Aggiorna app".
+**Non è una dipendenza.** Nessuna app la usa da `Cargo.toml` o da `package.json`: si **copia** quello che serve e da
+lì in poi il codice è dell'app. Quando un pezzo migliora in un'app e serve a tutte, si riporta qui.
 
-## Uso in un'app
+## Cosa c'è
+- **SApp**, un'app di esempio completa e funzionante (è quella che le Actions compilano e provano a ogni modifica):
+  accesso, utenti, pannello dell'amministratore, aggiornamenti dal pannello, web app installabile, app Android
+  scaricabile dal server, aggiornamento dal vivo. Il dominio è vuoto: è il posto dove va quello dell'app.
+  - `crates/` server Rust (architettura esagonale: domain · app · sqlite · system · http · server)
+  - `frontend/` pagina React + shadcn/ui (Vite, Tailwind v4)
+  - `packaging/` install.sh, aggiornatore, Caddy, systemd
+  - `.github/workflows/release.yml` compila, prova e pubblica la release
+- **[GUIDA.md](GUIDA.md)**: tutte le caratteristiche comuni, una per una, con le regole e da dove vengono.
+- `tools/nuova-app.py` crea un'app nuova copiando SApp e cambiando i nomi; `tools/icone.py` fa le icone.
 
-`Cargo.toml`:
-```toml
-s-core = { git = "https://github.com/fmichael98/s-core", tag = "v0.1.0" }
-```
-Router: `.merge(s_core::routes())` (rotte pubbliche `/shell.js`, `/shell.css`).
+## Nuova app
+    python3 tools/nuova-app.py ../s-note snote SNote 8095 20443
+Poi colore e icone, e il dominio dell'app (vedi GUIDA.md, «Nuova app»).
 
-`index.html` (prima di app.css / app.js):
-```html
-<link rel="stylesheet" href="/shell.css?v=0.1.0">
-<link rel="stylesheet" href="/app.css">
-<script>window.SHELL = { name: 'SHealth', csrf: 'X-SHealth', ua: 'SHealthApp', noFab: ['stats','settings'] };</script>
-<script src="/shell.js?v=0.1.0"></script>
-<script src="/app.js"></script>
-```
-`app.css` imposta solo l'accento e gli stili propri: `:root{--acc:#f82e41;--acc-ink:#fff}`.
+## Provare SApp
+    cd frontend && npm ci && npm run build && cd ..
+    cargo test
+    cargo run -p sapp -- hash-password             # impronta per password_hash
+    cargo run -p sapp -- --config prova.toml       # copia di packaging/config.example.toml con database in /tmp
 
-`app.js`: definisce le sezioni in `views` e chiama
-```js
-Shell.start({ load: async () => { S.settings = await get('/api/settings'); }, fab: () => …, currency: () => '€' });
-```
-Globali disponibili: `$ esc css app S api get setLive toast openModal closeModal choose confirmDel formModal COLORS tapAndHold tapFast views viewCache navigate render`.
-
-Campo con suggerimenti: `Combo.attach(input, [{v, t, color | pal, sub}], { value, allowEmpty, onPick(item, how), onCancel })` — scrivendo filtra e completa, ↑/↓ scelgono, Invio/Tab confermano (`how` dice quale tasto, con `Shift` davanti se premuto), Esc annulla.
-
-Tavolozza comune (colori di note, schede…): 6 pastello + nessuno, `Palette.colors`. La classe `Palette.cls(chiave)` (`pal-yellow`…) dà `--pal-bg` (fondo), `--pal-line` (bordo), `--pal-acc` (elementi sopra: caselle, icone) e `--pal-ink` (segno sopra `--pal-acc`), giusti in tema chiaro e scuro. `Palette.open(tasto, scelto, k => …)` apre la scelta.
-
-Ganci di `Shell.start`: `load` (dati di base, usato anche da trascinamento e aggiornamento dal vivo), `fab`, `currency`, `onForm(form, fields, vals)`, `onNavigate(view)`, `onPull`, `onVisible`, `afterLoad`, `onTheme(t)`.
-`window.SHELL`: `name`, `csrf` (intestazione anti-CSRF), `ua` (prefisso dello user-agent dell'app Android), `home`, `fab` (sezioni col +) oppure `noFab`, `aliases` (`{accounts:'home'}`), `live:false` (niente SSE), `theme` (`{ label(), cycle() }`: il tema lo gestisce l'app, la voce del menu chiama `cycle` e mostra `label`), `menu` (voci in più nel menu utente `[{label, icon, run}]`).
-
-App a pagina unica (es. SMap, mappa a tutto schermo): `window.SHELL = { name:'SMap', csrf:'X-SMap', bare:true }`. Con `bare` il guscio non gestisce sezioni (`#view`, `nav`, `#sezione`), gesti né SSE: `Shell.start({ load, afterLoad, onTheme })` carica i dati, riempie il menu utente, mostra "Aggiorna app" e le voci sviluppatore. Servono solo `.top header` con `.brand` e `.umenu`, `#modal/#modalBox`, `#toast`; `html.bare` toglie lo spazio in fondo alla pagina.
-
-## Rilascio
-Alza `version` in Cargo.toml, commit, tag `vX.Y.Z`, push. Le app scelgono quando passare al tag nuovo.
+## Il guscio di prima
+Fino alla 0.9.6 s-core era una dipendenza (il guscio `shell.js`/`shell.css` di SMoney, SHealth, SNotes, SMonitor):
+è rimasto, com'era, nel ramo [`guscio-v1`](https://github.com/fmichael98/s-core/tree/guscio-v1).

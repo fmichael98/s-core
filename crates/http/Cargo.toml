@@ -1,0 +1,27 @@
+[package]
+name = "sapp-http"
+description = "SApp: adattatore web (axum) — API JSON, pagine incorporate, aggiornamento dal vivo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+build = "build.rs"
+
+[dependencies]
+sapp-domain = { workspace = true }
+sapp-app = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-stream = { workspace = true }
+futures-core = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# prove dell'API con gli adattatori veri (Router::oneshot)
+sapp-sqlite = { workspace = true }
+sapp-system = { workspace = true }
+tower = { workspace = true }

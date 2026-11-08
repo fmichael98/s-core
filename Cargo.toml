@@ -1,10 +1,57 @@
-[package]
-name = "s-core"
-version = "0.9.6"
-edition = "2021"
-description = "Guscio comune delle app S* (SMoney, SHealth, SCalendar, SMonitor): barra, menu utente, gesti, finestre, aggiornamento dal vivo"
+# SApp — server diviso in crate (architettura esagonale).
+#
+# Le dipendenze vanno solo verso l'interno:
+#   domain  ←  app  ←  sqlite · system · http  ←  server
+#
+# - domain: regole pure, nessun database, rete, file o serde
+# - app:    casi d'uso + porte (trait di ciò che serve dal mondo esterno)
+# - sqlite: adattatore dei dati
+# - system: adattatore verso la macchina (password, orologio, file di configurazione, aggiornamenti, APK)
+# - http:   adattatore web (axum): API, pagine incorporate, aggiornamento dal vivo
+# - server: il programma `sapp`, collega tutto
+# Altri adattatori (servizi esterni, archivio file, notifiche…) sono crate in più accanto a questi.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+license = "UNLICENSED"
 publish = false
 
-[dependencies]
-axum = { version = "0.8", default-features = false }
-tokio = { version = "1.54.1", features = ["fs"] }
+[workspace.dependencies]
+sapp-domain = { path = "crates/domain" }
+sapp-app = { path = "crates/app" }
+sapp-sqlite = { path = "crates/sqlite" }
+sapp-system = { path = "crates/system" }
+sapp-http = { path = "crates/http" }
+
+axum = { version = "0.8", features = ["multipart"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+async-stream = "0.3"
+futures-core = "0.3"
+toml = "0.9"
+rusqlite = { version = "0.37", features = ["bundled"] }
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+argon2 = "0.5"
+rand = "0.8"
+base64 = "0.22"
+zip = { version = "8.6", default-features = false, features = ["deflate"] }
+ed25519-dalek = { version = "2", features = ["pkcs8", "pem"] }
+sha2 = "0.10"
+tower = { version = "0.5", features = ["util"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1

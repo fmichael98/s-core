@@ -1,0 +1,21 @@
+# SApp — configurazione (/etc/sapp/config.toml)
+# Si modifica dalla pagina dell'amministratore (Configurazione). A mano: dopo, sudo systemctl restart sapp
+
+# Rete locale: indirizzo e porta della pagina
+bind = "0.0.0.0:8090"
+
+# Accesso da fuori in HTTPS tramite Caddy: https://public_host:public_port (vuoto / 0 = solo rete locale)
+public_host = ""
+public_port = 19443
+
+# Sicurezza
+session_days = 30      # durata dell'accesso
+max_fails = 5          # tentativi sbagliati prima del blocco (per IP)
+lock_minutes = 15      # durata del blocco
+
+# Database SQLite (tutti i dati)
+database = "/var/lib/sapp/sapp.db"
+
+# Primo amministratore: usato solo al primo avvio, poi gli utenti stanno nel database
+username = "admin"
+password_hash = "INCOLLA_QUI_L_HASH"

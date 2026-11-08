@@ -122,9 +122,10 @@ Icone: glifo Lucide bianco su quadrato del colore (`tools/icone.py`).
   affidabili). Il contenuto scorre in `main` (`overflow-y-auto`).
 - **In alto**: sul telefono il titolo della sezione, grande (26 px, extrabold); da PC `Brand` a sinistra e le sezioni
   in alto (ToggleGroup) con «+ Nuovo». A destra: stato della rete (`OfflineBadge`), «Installa», menu utente.
-- **Isola** (`components/island.tsx`, telefono): pastiglia in basso (58 px) con le sezioni e il **+** tondo in mezzo
-  (azione, non pagina); il contenuto sfuma verso il fondo. Il contenuto lascia spazio sotto
-  (`pb-[calc(6rem+env(safe-area-inset-bottom))]`).
+- **Isola** (`components/island.tsx`, telefono): pastiglia di 58 px, 1,25rem sopra il fondo, con le sezioni e il
+  **+** tondo in mezzo (azione, non pagina); il contenuto sfuma verso il fondo e lascia spazio sotto
+  (`pb-[calc(6.5rem+env(safe-area-inset-bottom))]`). Risponde al rilascio del dito, non al click (il telefono il click
+  non lo manda se il tocco ferma il contenuto che scorre ancora), e i gesti della pagina non partono da lì.
 - **Gesti** (`components/gestures.tsx`): scorri a destra/sinistra = sezione accanto, trascina in giù = aggiorna.
 - Sezione nell'indirizzo (`#/elenco`): Indietro e preferiti funzionano. Scorciatoie della web app nel manifest
   (`/#nuovo`, `/#settings`).
@@ -150,7 +151,7 @@ utente («Installa l'app»). L'APK si scarica anche senza essere entrati.
 |---|---|
 | `lib/api.ts` | `get`/`api` con anti-CSRF, sessione scaduta → accesso, server che riparte, stato della rete, copie per l'offline |
 | `lib/boot.tsx` | avvio di una pagina: tema, tasto Indietro, web app, notifiche (sonner), tooltip, errori, niente zoom |
-| `lib/overlays.ts` | Indietro del telefono chiude finestre e menu; l'aggiornamento dal vivo aspetta che si chiudano |
+| `lib/overlays.ts` | Indietro del telefono chiude finestre e menu; l'aggiornamento dal vivo aspetta che si chiudano; sblocca la pagina se Radix lascia `pointer-events: none` sul body |
 | `lib/phone.ts` | ponte con l'app Android (`window.<App>App`), versione dell'APK, «Aggiorna app» |
 | `lib/palette.ts`, `palette-picker` | colori degli avatar e degli oggetti |
 | `components/leave-guard.tsx` | «Hai modifiche non salvate» prima di chiudere un pannello o uscire |
@@ -184,6 +185,9 @@ Quando serve qualcosa che il browser non fa (es. sveglie, widget). Riferimento: 
   **WebView** col gettone come cookie (LayoutParams `MATCH_PARENT`, altrimenti la pagina si taglia).
 - **Ponte** `window.<App>App` (`lib/phone.ts`): `openPhone()` apre la schermata nativa (in SCalendar `openAlarms`),
   `logout()`, `version()`, `updateApp()`.
+- **Indietro**: prima chiede alla pagina (`window.appBack()`, da `lib/overlays.ts`: chiude il pannello o la finestra
+  aperti), poi la cronologia della WebView, e sulla prima vista l'app va in secondo piano (`moveTaskToBack`), non si
+  chiude.
 - **Aggiornamento**: l'APK arriva dentro lo zip del server (`SApp X.Y.apk`); quando il server ne ha uno più nuovo, la
   pagina mostra «Aggiorna app» nel menu utente (pallino sull'avatar) e l'app lo scarica e apre l'installazione.
 - User-Agent `<App>App/X.Y` (WebView) e `<App>-Android/X.Y` (chiamate dell'app): il server li mostra tra i telefoni.

@@ -115,7 +115,7 @@ export function Home({ onSettings }: { onSettings: () => void }) {
       </header>
       <InstallDialog open={installing} onOpenChange={setInstalling} />
 
-      <main className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 lg:px-6", !wide && "pb-[calc(6rem+env(safe-area-inset-bottom))]")}>
+      <main className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 lg:px-6", !wide && "pb-[calc(6.5rem+env(safe-area-inset-bottom))]")}>
         <Gestures
           order={ORDER}
           current={section}

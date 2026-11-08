@@ -14,6 +14,13 @@ export function closeTopOverlay(): boolean {
   return true
 }
 
+/** Niente di aperto ma la pagina non prende i tocchi: Radix a volte lascia `pointer-events: none` sul body (una
+ *  finestra aperta da una voce di menu mentre il menu si chiudeva, es. Impostazioni) e allora nessun tocco faceva più
+ *  niente finché non si ricaricava la pagina. */
+function unlock() {
+  if (document.body.style.pointerEvents === "none" && !overlayOpen()) document.body.style.pointerEvents = ""
+}
+
 /** C'è il passo in più nella cronologia (qualcosa è aperto) */
 let pushed = false
 /** si sta togliendo il passo in più (aspetto che il ritorno arrivi) */
@@ -63,6 +70,7 @@ export function setupBackButton(): void {
   const sync = () => {
     // in attesa che il passo tolto sia davvero tolto: un passo nuovo adesso verrebbe tolto lui, al posto del vecchio
     // (e il prossimo Indietro uscirebbe dalla pagina): si riprova appena è fatto
+    unlock()
     if (leaving || ignorePop) return
     const open = overlayOpen()
     if (open && !pushed) {
@@ -96,6 +104,8 @@ export function setupBackButton(): void {
       sync()
     })
   }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state"] })
+  // lo stesso se il body resta bloccato senza che cambi altro nella pagina
+  new MutationObserver(() => requestAnimationFrame(unlock)).observe(document.body, { attributes: true, attributeFilter: ["style"] })
   window.addEventListener("popstate", () => {
     if (ignorePop) {
       ignorePop = false

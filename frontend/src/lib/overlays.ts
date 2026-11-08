@@ -23,7 +23,7 @@ const waiting: (() => void)[] = []
 
 /** la voce in cima alla cronologia è ancora il passo in più (il ritorno chiesto non è ancora arrivato: su un telefono
  *  occupato, per esempio a caricare il 3D, può metterci un po') */
-const onOverlayStep = () => !!(history.state as { scalOverlay?: boolean } | null)?.scalOverlay
+const onOverlayStep = () => !!(history.state as { overlayStep?: boolean } | null)?.overlayStep
 
 function flush() {
   if (ignorePop) return
@@ -66,7 +66,7 @@ export function setupBackButton(): void {
     if (leaving || ignorePop) return
     const open = overlayOpen()
     if (open && !pushed) {
-      history.pushState({ scalOverlay: true }, "")
+      history.pushState({ overlayStep: true }, "")
       pushed = true
     } else if (!open && pushed) {
       // chiuso con un clic o con Esc: tolgo il passo in più

@@ -132,9 +132,13 @@ Icone: glifo Lucide bianco su quadrato del colore (`tools/icone.py`).
   App Android, Web app.
 
 ### 4.4 Menu utente (`components/user-menu.tsx`)
-Avatar (da PC anche il nome) → voci dell'app (`entries`), poi Tema, Cambia password, Esci.
-Una voce con `alert: true` (es. «Aggiorna app 2.2») sta per prima, in evidenza, e mette un **pallino** sull'avatar
-finché non la si fa. Nell'app Android «Esci» esce dall'app (non solo dalla pagina).
+Avatar (da PC anche il nome; `image` e `initials` per l'avatar) → voci dell'app (`entries`), poi Tema, Cambia
+password, le voci `end`, Esci. Ogni voce (`MenuEntry`): `label`, `icon`, `onSelect` o `href`, e:
+- `alert`: da fare (es. «Aggiorna app 2.2»): in evidenza, col **pallino** arancio anche sull'avatar
+- `badge`: cose che aspettano l'utente (es. richieste): numero rosso sulla voce, sommato sull'avatar
+- `count`: numero da guardare ma non urgente (es. «Da testare»): solo sulla voce
+- `group`: linea sopra (nuovo gruppo, es. le voci del responsabile); `end`: in fondo, dopo tema e password
+Nell'app Android «Esci» esce dall'app (non solo dalla pagina).
 
 ### 4.5 Installare (`components/install-app.tsx`, `lib/pwa.ts`, `lib/phone.ts`)
 «Installa» apre la **scelta**: App Android (se il server ha l'APK; «consigliata» su Android) o Web app (prompt del
@@ -160,7 +164,12 @@ utente («Installa l'app»). L'APK si scarica anche senza essere entrati.
 ### 4.7 Web app (PWA)
 `public/manifest.json` (scorciatoie, icone anche *maskable*), `public/sw.js`: pagine dalla rete con copia di riserva,
 dati `/api/*` dalla rete con l'ultima copia se il server non risponde (solo da consultare), APK mai in cache;
-`offline.html` quando non c'è niente.
+`offline.html` quando non c'è niente. Senza server per qualche secondo, accanto al nome compare «offline»
+(`OfflineBadge`) con «Riprova adesso».
+
+Un'app può scegliere di **non** tenere copie (STurni: dati condivisi tra colleghi, meglio niente che vecchi): il
+service worker tiene solo script, stili e la pagina «non raggiungibile» (col suo logo), e la pagina non ha la parte
+delle copie in `lib/api.ts` (vedi STurni 2.77).
 
 ### 4.8 Scrittura
 Testi brevi e diretti, in italiano, con le virgolette «». Etichette di una o due parole; spiegazioni nel
@@ -207,7 +216,20 @@ Nel pacchetto `<repo>-vX.Y.Z/`: programma, file di `packaging/`, eventuale APK. 
 | App Android | SCalendar `android/` | §5 |
 | Servizio esterno | SGarage `crates/openapi` | esempio di adattatore verso un servizio a pagamento, facoltativo |
 
-## 9. Porte e colori
+## 9. Differenze note tra le app
+Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineato:
+
+| App | Cosa | Perché / quando |
+|---|---|---|
+| STurni | server in un crate solo, diviso in moduli (`server/src/{domain,app,adapters}`) | da dividere in crate più avanti, come lavoro a parte |
+| STurni | niente isola: navigazione sua (mese in basso, pannelli dal menu utente) | voluto: è una griglia di turni |
+| STurni | niente copie offline di pagine e dati | voluto (§4.7) |
+| STurni | web app installabile solo da telefono («Installa» non c'è da PC) | voluto |
+| STurni, SGarage | aggiornamento dal vivo su `/api/events` (qui `/api/live`) | solo il nome |
+| SCalendar | `/api/version` risponde `s-calendario` (le altre il nome breve) | da sistemare insieme all'app Android, che lo controlla |
+| SCalendar | ponte Android `openAlarms()` (qui `openPhone()`) | nome storico |
+
+## 10. Porte e colori
 | App | Repository | Nome breve | Casa | Da fuori | Colore |
 |---|---|---|---|---|---|
 | STurni | s-turni | sturni | 8099 | 17443 | verde acqua `oklch(0.56 0.095 206)` |
@@ -217,11 +239,11 @@ Nel pacchetto `<repo>-vX.Y.Z/`: programma, file di `packaging/`, eventuale APK. 
 
 Una porta nuova per ogni app (casa e da fuori), da aggiungere qui; sul router si inoltra quella da fuori.
 
-## 10. Nuova app
+## 11. Nuova app
 1. `python3 tools/nuova-app.py ../s-xyz sxyz SXyz PORTA_CASA PORTA_FUORI` (nomi, porte, segno del database).
 2. Colore (`index.css`) e icone (`tools/icone.py "#RRGGBB" glifo frontend/public`); `manifest.json`.
 3. Dominio: tipi e regole in `domain`, porte e casi d'uso in `app`, tabelle (migrazione 2) e repo in `sqlite`, rotte
    in `http` (un modulo per argomento) e viste in `view.rs`; prove a ogni strato.
 4. Pagina: sezioni in `app/home.tsx` (isola e gesti), tipi in `lib/types.ts`, schede in Impostazioni.
 5. Repository su GitHub, push, Actions verdi, prima release; installazione col `install.sh` del pacchetto.
-6. La porta e il colore nella tabella del §9.
+6. La porta e il colore nella tabella del §10.

@@ -1,1 +1,13 @@
 target/
+*.zip
+*.db
+*.db-*
+.cargo/
+frontend/node_modules/
+frontend/dist/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/keystore.properties
+*.apk

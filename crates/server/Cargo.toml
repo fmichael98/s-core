@@ -1,0 +1,23 @@
+[package]
+name = "sapp"
+description = "SApp - il programma: server web, comandi di servizio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "sapp"
+path = "src/main.rs"
+
+[dependencies]
+sapp-domain = { workspace = true }
+sapp-app = { workspace = true }
+sapp-sqlite = { workspace = true }
+sapp-system = { workspace = true }
+sapp-http = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+
+[lints]
+workspace = true

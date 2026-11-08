@@ -1,0 +1,6 @@
+[Unit]
+Description=SApp - installa l'aggiornamento caricato dalla pagina web
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/sapp/apply-update.sh

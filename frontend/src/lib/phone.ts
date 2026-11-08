@@ -37,10 +37,15 @@ export function verGt(a: string, b: string): boolean {
   return false
 }
 
+/** L'app ha un'app Android (l'APK arriva col pacchetto del server)? Le app che non ce l'hanno mettono false: niente
+ *  richiesta a /api/app e «Installa» propone solo la web app. */
+const HAS_ANDROID = true
+
 let cached: Promise<ApkInfo | null> | null = null
 
 /** L'app Android sul server (una richiesta sola per pagina; pubblica: serve anche prima di entrare). */
 function loadApk(): Promise<ApkInfo | null> {
+  if (!HAS_ANDROID) return Promise.resolve(null)
   cached ??= fetch("/api/app", { credentials: "same-origin" })
     .then((r) => (r.ok ? (r.json() as Promise<ApkInfo>) : null))
     .catch(() => null)

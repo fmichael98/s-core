@@ -43,7 +43,7 @@ export function OfflineBadge() {
         <p>
           <span className="font-medium">Il server non risponde.</span>{" "}
           <span className="text-muted-foreground">
-            {saved ? `Vedi i dati salvati ${when(saved)}, solo da consultare.` : "Si può solo consultare."} Si riprova da solo.
+            {saved ? `Vedi i dati salvati ${when(saved)}, solo da consultare.` : "Quando torna si aggiorna tutto."} Si riprova da solo.
           </span>
         </p>
         <Button size="sm" variant="outline" onClick={retryServer}>

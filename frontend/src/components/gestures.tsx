@@ -80,7 +80,8 @@ export function Gestures({
       const mx = e.touches[0].clientX - x0
       const my = e.touches[0].clientY - y0
       if (!mode) {
-        if (my > 0 && atTop() && e.cancelable) e.preventDefault()
+        // sotto i 10 px è un tocco: guai a fermarlo (un touchmove annullato toglie il «click», e il tocco non faceva
+        // niente se il dito scivolava appena in giù col contenuto in cima). Il gesto si decide solo dopo.
         if (Math.abs(mx) < 10 && Math.abs(my) < 10) return
         if (Math.abs(mx) > Math.abs(my) * 1.3) {
           const w = innerWidth

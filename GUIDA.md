@@ -151,7 +151,7 @@ utente («Installa l'app»). L'APK si scarica anche senza essere entrati.
 |---|---|
 | `lib/api.ts` | `get`/`api` con anti-CSRF, sessione scaduta → accesso, server che riparte, stato della rete, copie per l'offline |
 | `lib/boot.tsx` | avvio di una pagina: tema, tasto Indietro, web app, notifiche (sonner), tooltip, errori, niente zoom |
-| `lib/overlays.ts` | Indietro del telefono chiude finestre e menu; l'aggiornamento dal vivo aspetta che si chiudano |
+| `lib/overlays.ts` | Indietro del telefono chiude finestre e menu; l'aggiornamento dal vivo aspetta che si chiudano; sblocca la pagina se Radix lascia `pointer-events: none` sul body |
 | `lib/phone.ts` | ponte con l'app Android (`window.<App>App`), versione dell'APK, «Aggiorna app» |
 | `lib/palette.ts`, `palette-picker` | colori degli avatar e degli oggetti |
 | `components/leave-guard.tsx` | «Hai modifiche non salvate» prima di chiudere un pannello o uscire |
@@ -185,6 +185,9 @@ Quando serve qualcosa che il browser non fa (es. sveglie, widget). Riferimento: 
   **WebView** col gettone come cookie (LayoutParams `MATCH_PARENT`, altrimenti la pagina si taglia).
 - **Ponte** `window.<App>App` (`lib/phone.ts`): `openPhone()` apre la schermata nativa (in SCalendar `openAlarms`),
   `logout()`, `version()`, `updateApp()`.
+- **Indietro**: prima chiede alla pagina (`window.appBack()`, da `lib/overlays.ts`: chiude il pannello o la finestra
+  aperti), poi la cronologia della WebView, e sulla prima vista l'app va in secondo piano (`moveTaskToBack`), non si
+  chiude.
 - **Aggiornamento**: l'APK arriva dentro lo zip del server (`SApp X.Y.apk`); quando il server ne ha uno più nuovo, la
   pagina mostra «Aggiorna app» nel menu utente (pallino sull'avatar) e l'app lo scarica e apre l'installazione.
 - User-Agent `<App>App/X.Y` (WebView) e `<App>-Android/X.Y` (chiamate dell'app): il server li mostra tra i telefoni.

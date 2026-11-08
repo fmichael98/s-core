@@ -122,9 +122,10 @@ Icone: glifo Lucide bianco su quadrato del colore (`tools/icone.py`).
   affidabili). Il contenuto scorre in `main` (`overflow-y-auto`).
 - **In alto**: sul telefono il titolo della sezione, grande (26 px, extrabold); da PC `Brand` a sinistra e le sezioni
   in alto (ToggleGroup) con «+ Nuovo». A destra: stato della rete (`OfflineBadge`), «Installa», menu utente.
-- **Isola** (`components/island.tsx`, telefono): pastiglia in basso (58 px) con le sezioni e il **+** tondo in mezzo
-  (azione, non pagina); il contenuto sfuma verso il fondo. Il contenuto lascia spazio sotto
-  (`pb-[calc(6rem+env(safe-area-inset-bottom))]`).
+- **Isola** (`components/island.tsx`, telefono): pastiglia di 58 px, 1,25rem sopra il fondo, con le sezioni e il
+  **+** tondo in mezzo (azione, non pagina); il contenuto sfuma verso il fondo e lascia spazio sotto
+  (`pb-[calc(6.5rem+env(safe-area-inset-bottom))]`). Risponde al rilascio del dito, non al click (il telefono il click
+  non lo manda se il tocco ferma il contenuto che scorre ancora), e i gesti della pagina non partono da lì.
 - **Gesti** (`components/gestures.tsx`): scorri a destra/sinistra = sezione accanto, trascina in giù = aggiorna.
 - Sezione nell'indirizzo (`#/elenco`): Indietro e preferiti funzionano. Scorciatoie della web app nel manifest
   (`/#nuovo`, `/#settings`).

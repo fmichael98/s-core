@@ -3,6 +3,9 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.2
+- Isola: risponde a ogni tocco (al rilascio del dito, anche col contenuto che scorre ancora), un po' più in alto, i gesti non partono da lì
+
 ## 1.0.1
 - Menu utente: voci con numeri (`badge` rosso anche sull'avatar, `count` solo sulla voce), gruppi, voci in fondo, collegamenti, avatar con immagine
 - `lib/phone.ts`: `HAS_ANDROID` per le app senza app Android (niente richiesta a /api/app)

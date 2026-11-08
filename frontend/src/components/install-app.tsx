@@ -116,6 +116,8 @@ export function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [downloaded, setDownloaded] = useState(false)
   const android = !!apk?.available && !isIOS()
   const webDone = st === "installed" || st === "elsewhere"
+  // senza app Android non c'è niente da scegliere: subito come si installa la web app
+  const showHowTo = howTo || !android
   const close = (o: boolean) => {
     onOpenChange(o)
     if (!o) {
@@ -128,9 +130,9 @@ export function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Installa SApp</DialogTitle>
-          <DialogDescription>{howTo ? "Si apre come un'app, nella sua finestra, e si aggiorna da sola." : "Scegli come averla su questo dispositivo."}</DialogDescription>
+          <DialogDescription>{showHowTo ? "Si apre come un'app, nella sua finestra, e si aggiorna da sola." : "Scegli come averla su questo dispositivo."}</DialogDescription>
         </DialogHeader>
-        {howTo ? (
+        {showHowTo ? (
           <HowTo st={st} />
         ) : (
           <div className="grid gap-3">
@@ -177,7 +179,7 @@ export function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </div>
         )}
         <DialogFooter>
-          {howTo && (
+          {howTo && android && (
             <Button variant="ghost" onClick={() => setHowTo(false)}>
               Indietro
             </Button>
@@ -201,7 +203,13 @@ export function InstallButton({ className, label = "Installa" }: { className?: s
   if (phone || (!android && (st === "installed" || st === "elsewhere"))) return null
   return (
     <>
-      <Button size="sm" variant="outline" className={className} onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        className={className}
+        // solo web app e il browser la sa installare: subito, senza riquadro
+        onClick={() => (!android && st === "ready" ? void install() : setOpen(true))}
+      >
         <DownloadIcon /> {label}
       </Button>
       <InstallDialog open={open} onOpenChange={setOpen} />

@@ -151,5 +151,7 @@ jobs:
             echo "::warning::La release v$V esiste già e resta com'è: per pubblicarne una nuova alza la versione in Cargo.toml"
             exit 0
           fi
-          gh release create "v$V" "s-app-v$V.zip" $APK -t "SApp $V" \
-            -n "Da caricare dalla pagina dell'amministratore: Aggiornamenti → scegli lo zip → Installa.${APK:+ L'app Android è dentro lo zip (il server la offre ai telefoni) e qui sotto.}"
+          NOTE="Da caricare dalla pagina dell'amministratore: Aggiornamenti → scegli lo zip → Installa."
+          # (un apostrofo dentro ${APK:+…} fra virgolette rompe bash: la frase in più si aggiunge a parte)
+          if [ -n "$APK" ]; then NOTE="$NOTE L'app Android è dentro lo zip (il server la offre ai telefoni) e qui sotto."; fi
+          gh release create "v$V" "s-app-v$V.zip" $APK -t "SApp $V" -n "$NOTE"

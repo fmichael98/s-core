@@ -178,7 +178,9 @@ Testi brevi e diretti, in italiano, con le virgolette «». Etichette di una o d
 + è quello dell'isola (o «+ Nuovo» da PC).
 
 ## 5. App Android (facoltativa)
-Quando serve qualcosa che il browser non fa (es. sveglie, widget). Riferimento: **SCalendar** (`android/`).
+Quando serve qualcosa che il browser non fa (es. sveglie, widget), o come scelta in più accanto alla web app.
+Riferimenti: **SCalendar** (`android/`: sveglie, widget, sincronizzazione) e **SHealth** (`android/`: solo la pagina,
+con i file da allegare scelti col selettore di Android, i PDF aperti col telefono e i download in Download).
 - Kotlin + Jetpack Compose, minSdk 26, compilata solo dalle Actions (§7); stessa chiave di firma per sempre (in
   `android/signing/`), così ogni versione si installa sopra la precedente.
 - Accesso col telefono (`/api/device/login`, nome del telefono) → gettone salvato; la pagina dell'app gira in una
@@ -217,7 +219,7 @@ Nel pacchetto `<repo>-vX.Y.Z/`: programma, file di `packaging/`, eventuale APK. 
 | Notifiche Web Push | SGarage `crates/push`, `frontend/src/lib/push.ts` | avvisi al telefono/PC anche a pagina chiusa (VAPID, RFC 8291/8292) |
 | Archivio file | SGarage `crates/files` | file caricati su disco, nominati con l'impronta del contenuto |
 | Collegamento tra app | STurni/SGarage `…/scalendar.rs` (chi dà) e SCalendar `crates/links` (chi legge) | codice personale `id.segreto` creato nell'app che dà, `GET /api/ext/…` con `Authorization: Bearer` |
-| App Android | SCalendar `android/` | §5 |
+| App Android | SCalendar `android/` (sveglie, widget), SHealth `android/` (solo la pagina) | §5 |
 | Servizio esterno | SGarage `crates/openapi` | esempio di adattatore verso un servizio a pagamento, facoltativo |
 
 ## 9. Differenze note tra le app
@@ -239,6 +241,7 @@ Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineat
 | STurni | s-turni | sturni | 8099 | 17443 | verde acqua `oklch(0.56 0.095 206)` |
 | SGarage | s-garage | sgarage | 8101 | 18443 | lime `#A3E635` |
 | SCalendar | s-calendario | scalendario | 8097 | 13443 | viola `#8D50E9` |
+| SHealth | s-salute | shealth | 8098 | 14443 | rosso `#F82E41` |
 | SApp (esempio) | s-core | sapp | 8090 | 19443 | blu `#2563EB` |
 
 Una porta nuova per ogni app (casa e da fuori), da aggiungere qui; sul router si inoltra quella da fuori.

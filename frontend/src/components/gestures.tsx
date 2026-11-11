@@ -10,6 +10,17 @@ type Pull = "idle" | "pull" | "ready" | "busy" | "done" | "error"
 const MAX = 90
 const GO = 64
 
+/** Il riquadro che scorre in verticale sotto il dito (la pagina sotto la barra in alto, il contenuto di una scheda), o
+ *  null se scorre la finestra. */
+function scroller(el: Element | null): HTMLElement | null {
+  for (let e = el as HTMLElement | null; e && e !== document.body; e = e.parentElement) {
+    if (e.hasAttribute("data-scroll")) return e
+    const oy = getComputedStyle(e).overflowY
+    if ((oy === "auto" || oy === "scroll") && e.scrollHeight > e.clientHeight) return e
+  }
+  return null
+}
+
 /** Gesti col dito sul contenuto: scorri a destra/sinistra = sezione accanto, trascina in giù = aggiorna.
  *  Un gesto solo alla volta: la prima direzione decisa (orizzontale o verticale) vince. */
 export function Gestures({
@@ -46,6 +57,8 @@ export function Gestures({
     let dx = 0
     let busy = false
     let inner: HTMLElement | null = null
+    // in cima quando il dito si è appoggiato: solo allora tirare in giù aggiorna (non a metà pagina, risalendo)
+    let topAtStart = false
     const atTop = () => window.scrollY <= 0 && (!inner || inner.scrollTop <= 0)
     const el = () => content.current
     const place = (x: number, anim: boolean) => {
@@ -66,8 +79,10 @@ export function Gestures({
       const target = e.target as Element
       // griglia e liste che scorrono di lato, barra delle sezioni, menu: non sono gesti
       if (target.closest("[data-no-swipe], [role=tablist], [data-radix-popper-content-wrapper], input[type=range]")) return
-      // dentro un riquadro che scorre (il contenuto della scheda): si aggiorna solo se è in cima anche lui
-      inner = target.closest<HTMLElement>("[data-scroll]")
+      // dentro un riquadro che scorre (la pagina sotto la barra, il contenuto di una scheda): si aggiorna solo se è
+      // in cima anche lui
+      inner = scroller(target)
+      topAtStart = atTop()
       x0 = e.touches[0].clientX
       y0 = e.touches[0].clientY
       t0 = Date.now()
@@ -86,7 +101,7 @@ export function Gestures({
         if (Math.abs(mx) > Math.abs(my) * 1.3) {
           const w = innerWidth
           mode = x0 > w * 0.1 && x0 < w * 0.9 ? "swipe" : "none" // non dal bordo (gesto "indietro" del telefono)
-        } else mode = my > 0 && atTop() && Math.abs(my) > Math.abs(mx) * 1.3 ? "pull" : "none"
+        } else mode = my > 0 && topAtStart && atTop() && Math.abs(my) > Math.abs(mx) * 1.3 ? "pull" : "none"
       }
       if (mode === "pull") {
         if (my <= 0 || !atTop()) {

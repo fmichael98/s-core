@@ -231,7 +231,8 @@ Nel pacchetto `<repo>-vX.Y.Z/`: programma, file di `packaging/`, eventuale APK. 
 | Notifiche Web Push | SGarage `crates/push`, `frontend/src/lib/push.ts` | avvisi al telefono/PC anche a pagina chiusa (VAPID, RFC 8291/8292) |
 | Archivio file | SGarage `crates/files` | file caricati su disco, nominati con l'impronta del contenuto |
 | Collegamento tra app | STurni/SGarage `…/scalendar.rs` (chi dà) e SCalendar `crates/links` (chi legge) | codice personale `id.segreto` creato nell'app che dà, `GET /api/ext/…` con `Authorization: Bearer` |
-| App Android | SCalendar `android/` (sveglie, widget), SHealth `android/` (solo la pagina) | §5 |
+| App Android | SCalendar `android/` (sveglie, widget), SHealth e SMonitor `android/` (solo la pagina) | §5 |
+| Un solo utente | SMonitor `crates/http/src/auth.rs` (tutto all'amministratore), `app/settings-view.tsx` | niente pannello `/admin`: le sue schede (configurazione, aggiornamenti, sistema) stanno nelle Impostazioni |
 | Servizio esterno | SGarage `crates/openapi` | esempio di adattatore verso un servizio a pagamento, facoltativo |
 
 ## 9. Differenze note tra le app
@@ -246,6 +247,9 @@ Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineat
 | STurni, SGarage | aggiornamento dal vivo su `/api/events` (qui `/api/live`) | solo il nome |
 | SCalendar | `/api/version` risponde `s-calendario` (le altre il nome breve) | da sistemare insieme all'app Android, che lo controlla |
 | SCalendar | ponte Android `openAlarms()` (qui `openPhone()`) | nome storico |
+| SMonitor | un solo utente, l'amministratore (entra anche dall'app Android) | voluto: chi entra riavvia servizi e installa zip come root |
+| SMonitor | stato del server su `/api/events` (oltre a `/api/live`), JSON del monitor in camelCase | come la 2.x: la pagina lo usa così |
+| SMonitor | install.sh non mette da solo il DDNS di S Map come indirizzo pubblico | voluto: da fuori si apre solo dalle Impostazioni |
 
 ## 10. Porte e colori
 | App | Repository | Nome breve | Casa | Da fuori | Colore |
@@ -254,6 +258,7 @@ Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineat
 | SGarage | s-garage | sgarage | 8101 | 18443 | lime `#A3E635` |
 | SCalendar | s-calendario | scalendario | 8097 | 13443 | viola `#8D50E9` |
 | SHealth | s-salute | shealth | 8098 | 14443 | rosso `#F82E41` |
+| SMonitor | s-monitor_server | servermon | 8095 | 16443 | ambra `#E49914` |
 | SApp (esempio) | s-core | sapp | 8090 | 19443 | blu `#2563EB` |
 
 Una porta nuova per ogni app (casa e da fuori), da aggiungere qui; sul router si inoltra quella da fuori.

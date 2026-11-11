@@ -3,6 +3,10 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.4
+- `index.css`: una griglia senza `grid-cols-*` ha una colonna `minmax(0, 1fr)`: si restringe con lo schermo invece di allargarsi col contenuto (in SHealth la pagina usciva dallo schermo dei telefoni da 360 px)
+- `tools/schermi.py`: dice cosa esce dallo schermo a 360 e 320 px, anche col testo grande; regole nella GUIDA (§4.3.1)
+
 ## 1.0.3
 - `components/gestures.tsx`: «trascina in giù per aggiornare» solo se l'area che scorre era in cima quando si appoggia il dito; l'area che scorre si trova da sola (anche `<main>` sotto la barra, senza `data-scroll`): prima la bolla compariva anche a metà pagina
 - release.yml: nota della release senza apostrofo dentro `${APK:+…}`

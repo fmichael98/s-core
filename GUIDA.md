@@ -126,11 +126,23 @@ Icone: glifo Lucide bianco su quadrato del colore (`tools/icone.py`).
   **+** tondo in mezzo (azione, non pagina); il contenuto sfuma verso il fondo e lascia spazio sotto
   (`pb-[calc(6.5rem+env(safe-area-inset-bottom))]`). Risponde al rilascio del dito, non al click (il telefono il click
   non lo manda se il tocco ferma il contenuto che scorre ancora), e i gesti della pagina non partono da lì.
-- **Gesti** (`components/gestures.tsx`): scorri a destra/sinistra = sezione accanto, trascina in giù = aggiorna.
+- **Gesti** (`components/gestures.tsx`): scorri a destra/sinistra = sezione accanto, trascina in giù = aggiorna,
+  solo se l'area che scorre (trovata da sola, anche `main`) era in cima quando si appoggia il dito.
 - Sezione nell'indirizzo (`#/elenco`): Indietro e preferiti funzionano. Scorciatoie della web app nel manifest
   (`/#nuovo`, `/#settings`).
 - **Impostazioni** in un pannello laterale (Sheet) aperto dal menu utente; schede (Card): Account, quelle dell'app,
   App Android, Web app.
+
+### 4.3.1 Telefoni stretti
+La pagina non deve mai uscire dallo schermo, anche a **360 e 320 px** di larghezza e col testo del telefono grande:
+- una griglia senza `grid-cols-*` ha una colonna `minmax(0, 1fr)` (regola in `index.css`): si restringe, non si
+  allarga col contenuto; in una riga flessibile il pezzo che può accorciarsi ha `min-w-0` (e `truncate` se serve);
+- niente larghezze fisse prese da una misura: un grafico SVG largo quanto il riquadro misurato ha `max-w-full`
+  (altrimenti tiene il riquadro largo com'era e non si restringe più);
+- pulsanti affiancati (periodi, schede) con `flex-1 min-w-0 overflow-hidden`; tabelle con celle più strette sotto i
+  640 px;
+- prima di consegnare: `python3 tools/schermi.py http://127.0.0.1:PORTA utente password "#/sezione" …` (con
+  l'app avviata): dice cosa esce dallo schermo a 360 e 320 px, anche col testo grande, e salva le immagini.
 
 ### 4.4 Menu utente (`components/user-menu.tsx`)
 Avatar (da PC anche il nome; `image` e `initials` per l'avatar) → voci dell'app (`entries`), poi Tema, Cambia

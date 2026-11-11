@@ -98,6 +98,12 @@
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
   }
+  /* una griglia senza colonne indicate ha una colonna che si restringe con lo schermo, non che si allarga col
+     contenuto: un testo lungo, un grafico o dei pulsanti non portano la pagina fuori dallo schermo dei telefoni stretti
+     (con `grid-cols-*` vale quello) */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   /* barre di scorrimento sottili, nei colori del tema; da telefono si scorre ma non si ingrandisce (due dita, doppio tocco) */
   * {
     touch-action: pan-x pan-y;

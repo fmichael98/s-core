@@ -3,6 +3,11 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.5
+- `lib/api.ts`: intestazione anti-CSRF scritta col nome breve (`x-sapp`): nelle app col nome breve diverso dal nome (SMonitor → servermon) pagina e server ora coincidono (prima ogni modifica era rifiutata)
+- `app/App.tsx`: «#settings» apre le Impostazioni anche con la pagina già aperta
+- GUIDA: SMonitor nelle tabelle (§8 un solo utente, §9, §10)
+
 ## 1.0.4
 - `index.css`: una griglia senza `grid-cols-*` ha una colonna `minmax(0, 1fr)`: si restringe con lo schermo invece di allargarsi col contenuto (in SHealth la pagina usciva dallo schermo dei telefoni da 360 px)
 - `tools/schermi.py`: dice cosa esce dallo schermo a 360 e 320 px, anche col testo grande; regole nella GUIDA (§4.3.1)

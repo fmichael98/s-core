@@ -32,6 +32,12 @@ export function App() {
   useEffect(() => {
     reloadMe().catch((e) => setFailed(errorText(e)))
   }, [reloadMe])
+  // «#settings» anche con la pagina già aperta (scorciatoia dell'app installata, collegamenti)
+  useEffect(() => {
+    const on = () => startWithSettings() && setOpen(true)
+    window.addEventListener("hashchange", on)
+    return () => window.removeEventListener("hashchange", on)
+  }, [])
 
   // qualcuno ha cambiato qualcosa (anche da un altro dispositivo): si rilegge
   useLive(reloadMe)

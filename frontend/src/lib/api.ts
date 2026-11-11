@@ -1,8 +1,9 @@
 /* Chiamate al server: intestazione anti-CSRF, sessione scaduta, server che si riavvia o non risponde, indicatore di
    collegamento. Senza server il service worker risponde con l'ultima copia dei dati (solo da consultare). */
 
-/** Intestazione che il server vuole in ogni richiesta che modifica qualcosa. */
-const CSRF = "X-SApp"
+/** Intestazione che il server vuole in ogni richiesta che modifica qualcosa (come CSRF_HEADER nel server: col nome
+ *  breve, così nuova-app.py la cambia uguale nei due posti anche quando il nome breve è diverso dal nome). */
+const CSRF = "x-sapp"
 
 // ---------------------------------------------------------------- stato del collegamento (pallino in alto)
 

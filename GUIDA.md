@@ -96,6 +96,9 @@ Rust edition 2024, `unsafe` vietato, clippy con `-D warnings`.
 ### 3.6 Aggiornamento dal vivo (`http/live.rs`, `hooks/use-live.ts`)
 `/api/live` (SSE): dopo ogni modifica riuscita (POST/PUT/DELETE) tutte le pagine aperte rileggono. Se cambia la
 versione del server (`boot`), le pagine si ricaricano da sole.
+- **Avvisi mirati** (`Notifier::send(utenti, nome, dati)`): un avviso con dati solo alle pagine di alcune persone,
+  ricevuto con `useLive(reload, { nome: (dati) => … })` anche con una finestra aperta. Le rotte che avvisano così (es. a
+  ogni lettera scritta) si tolgono dal «rileggi tutto» in `notify_on_change`. Esempio: SNotes (nota cambiata, cursori).
 
 ### 3.7 Altro di comune
 - `/api/version` → `{ app: "<nome breve>", version, boot, https }`: install.sh e l'app Android controllano `app`.
@@ -238,6 +241,10 @@ Nel pacchetto `<repo>-vX.Y.Z/`: programma, file di `packaging/`, eventuale APK. 
 | App Android | SCalendar `android/` (sveglie, widget), SHealth e SMonitor `android/` (solo la pagina) | §5 |
 | Un solo utente | SMonitor `crates/http/src/auth.rs` (tutto all'amministratore), `app/settings-view.tsx` | niente pannello `/admin`: le sue schede (configurazione, aggiornamenti, sistema) stanno nelle Impostazioni |
 | Servizio esterno | SGarage `crates/openapi` | esempio di adattatore verso un servizio a pagamento, facoltativo |
+| «Da testare» | SHealth, SNotes (`app/dev.rs`, `http/dev.rs`, `app/dev-tests.tsx`) | gli sviluppatori (scelti dall'amministratore) spuntano le novità di ogni versione |
+| Dati anche offline, a più mani | SNotes `crates/domain/src/ydoc.rs`, `frontend/src/notes/store.ts` | documenti Yjs salvati nel browser (IndexedDB) e uniti dal server carattere per carattere; cursori degli altri |
+| Colori dei fogli | SNotes `frontend/src/notes/tints.tsx`, `notes.css` (`.tint-*`) | 6 pastello (+ nessuno) per note e schede, giusti in chiaro e in scuro, con il colore degli elementi sopra |
+| Dati dalla versione di prima | SHealth, SNotes `crates/sqlite/src/legacy.rs` + install.sh | `<app> import-vN VECCHIO NUOVO`: database nuovo, il vecchio resta; se la nuova non parte torna la vecchia |
 
 ## 9. Differenze note tra le app
 Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineato:
@@ -254,6 +261,9 @@ Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineat
 | SMonitor | un solo utente, l'amministratore (entra anche dall'app Android) | voluto: chi entra riavvia servizi e installa zip come root |
 | SMonitor | stato del server su `/api/events` (oltre a `/api/live`), JSON del monitor in camelCase | come la 2.x: la pagina lo usa così |
 | SMonitor | install.sh non mette da solo il DDNS di S Map come indirizzo pubblico | voluto: da fuori si apre solo dalle Impostazioni |
+| SNotes | isola con tre sezioni (Note, Condivise, Archivio) e il + al terzo posto | le sezioni sono tre |
+| SNotes | note offline sue (IndexedDB + indice in localStorage), non le copie dei dati di `lib/api.ts` | si scrive anche offline, non solo si consulta |
+| SNotes | nella pagina anche il ponte della vecchia app Android 1.x (`window.AndroidApp`) per «Aggiorna app» | finché qualcuno la usa |
 
 ## 10. Porte e colori
 | App | Repository | Nome breve | Casa | Da fuori | Colore |
@@ -263,6 +273,7 @@ Quello che un'app fa diversamente da qui, apposta o in attesa di essere allineat
 | SCalendar | s-calendario | scalendario | 8097 | 13443 | viola `#8D50E9` |
 | SHealth | s-salute | shealth | 8098 | 14443 | rosso `#F82E41` |
 | SMonitor | s-monitor_server | servermon | 8095 | 16443 | ambra `#E49914` |
+| SNotes | s-notes | snotes | 8100 | 16443 | giallo-arancio `#F0AD14` |
 | SApp (esempio) | s-core | sapp | 8090 | 19443 | blu `#2563EB` |
 
 Una porta nuova per ogni app (casa e da fuori), da aggiungere qui; sul router si inoltra quella da fuori.

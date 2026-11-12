@@ -3,6 +3,9 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.7
+- `install.sh`: `|| true` su ogni lettura del config (con `set -euo pipefail` una chiave mancante fermava lo script in silenzio: in SMonitor l'aggiornamento dalla 2.x tornava sempre indietro); le chiavi nuove si scrivono in cima e non dopo le tabelle, dove varrebbero per la tabella
+
 ## 1.0.6
 - `lib/phone.ts`: `saveInApp` (ponte `saveFile`) per salvare in Download i file fatti dalla pagina: nella WebView dell'app Android i link «blob:» non scaricano
 - GUIDA §5: fotocamera tra le scelte del selettore dei file e file della pagina salvati col ponte (SGarage come riferimento)

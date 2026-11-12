@@ -37,8 +37,21 @@ if [ ! -f "$CFG" ]; then
 else
   echo "  config esistente mantenuto"
 fi
-# chiavi nuove aggiunte senza toccare il resto
-addkey() { grep -qE "^$1[[:space:]]*=" "$CFG" || { printf '\n%s\n%s = %s\n' "$2" "$1" "$3" >> "$CFG"; echo "  aggiunto $1"; }; }
+# chiavi nuove aggiunte senza toccare il resto, in cima: dopo una tabella ([[...]] o [...]) varrebbero per lei e non
+# per il programma. Una chiave finita là (versioni vecchie di questo script) si sposta in cima col suo valore.
+addkey() {
+  local key=$1 comment=$2 def=$3 val tmp
+  if awk '/^[[:space:]]*\[/ { exit } { print }' "$CFG" | grep -qE "^$key[[:space:]]*="; then return 0; fi
+  val=$(grep -E "^$key[[:space:]]*=" "$CFG" | tail -1 | sed -E 's/^[^=]*=[[:space:]]*//' || true)
+  tmp=$(mktemp)
+  awk -v k="$key" -v c="$comment" -v v="${val:-$def}" '
+    $0 ~ ("^" k "[[:space:]]*=") || $0 == c { next }
+    !done && /^[[:space:]]*\[/ { print c; print k " = " v; print ""; done = 1 }
+    { print }
+    END { if (!done) { print ""; print c; print k " = " v } }' "$CFG" > "$tmp"
+  cat "$tmp" > "$CFG"; rm -f "$tmp"
+  echo "  aggiunto $key"
+}
 addkey public_host "# Accesso da fuori in HTTPS (Caddy): indirizzo pubblico (DDNS), vuoto = solo rete locale" "\"$DDNS\""
 addkey public_port "# Porta HTTPS pubblica (standard SApp 19443), 0 = spento" "19443"
 addkey max_fails "# Tentativi di accesso sbagliati prima del blocco (per IP)" "5"
@@ -47,7 +60,9 @@ addkey lock_minutes "# Minuti di blocco" "15"
 chown root:sapp "$CFG"; chmod 640 "$CFG"
 
 step 3 "Copia di sicurezza del database (si tengono le ultime 10)"
-DB=$(grep -E '^database[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2); DB=${DB:-/var/lib/sapp/sapp.db}
+# `|| true` su ogni lettura del config: con set -e e pipefail una chiave che manca (grep senza righe) fermerebbe lo
+# script senza dire niente (in SMonitor l'aggiornamento dalla 2.x tornava sempre indietro per questo)
+DB=$(grep -E '^database[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2 || true); DB=${DB:-/var/lib/sapp/sapp.db}
 if [ -f "$DB" ]; then
   OLDVER=$(/usr/local/bin/sapp --version 2>/dev/null | awk '{print $2}' || true)
   BK=/var/lib/sapp/backup/$(date +%Y%m%d-%H%M%S)-v${OLDVER:-precedente}.db
@@ -91,7 +106,7 @@ systemctl enable sapp >/dev/null 2>&1
 systemctl restart sapp
 
 step 7 "Verifica"
-PORT=$(grep -E '^bind[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2 | sed -E 's/.*:([0-9]+)$/\1/'); PORT=${PORT:-8090}
+PORT=$(grep -E '^bind[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2 | sed -E 's/.*:([0-9]+)$/\1/' || true); PORT=${PORT:-8090}
 OK=""
 for i in $(seq 1 20); do
   # deve rispondere proprio SApp (non un altro servizio sulla stessa porta)
@@ -109,8 +124,8 @@ fi
 echo "  risponde: $(curl -fsS "http://127.0.0.1:$PORT/api/version")"
 
 IP=$(hostname -I | awk '{print $1}')
-PUB=$(grep -E '^public_host[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2)
-PP=$(grep -E '^public_port[[:space:]]*=' "$CFG" | tail -1 | sed -E 's/.*=[[:space:]]*([0-9]+).*/\1/')
+PUB=$(grep -E '^public_host[[:space:]]*=' "$CFG" | tail -1 | cut -d'"' -f2 || true)
+PP=$(grep -E '^public_port[[:space:]]*=' "$CFG" | tail -1 | sed -E 's/.*=[[:space:]]*([0-9]+).*/\1/' || true)
 echo
 echo "=== Fatto in $(( $(date +%s) - T0 )) secondi ==="
 echo "  In casa:   http://$IP:$PORT   (amministratore: admin)"

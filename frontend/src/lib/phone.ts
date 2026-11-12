@@ -14,9 +14,25 @@ interface PhoneBridge {
   version(): string
   /** Scarica e installa l'app nuova (le app vecchie potrebbero non averlo). */
   updateApp?(): void
+  /** Salva in Download un file fatto dalla pagina (contenuto in base64): nella WebView i link «blob:» non scaricano. */
+  saveFile?(name: string, mime: string, base64: string): void
 }
 
 export const phone: PhoneBridge | undefined = (window as unknown as { SAppApp?: PhoneBridge }).SAppApp
+
+/** Dentro l'app: salva un file fatto dalla pagina in Download (true se ci ha pensato l'app). Le pagine lo usano al
+ *  posto del link «blob:» con `download`. */
+export async function saveInApp(file: Blob, name: string): Promise<boolean> {
+  if (!phone?.saveFile) return false
+  const data = await new Promise<string>((ok, ko) => {
+    const r = new FileReader()
+    r.onload = () => ok(String(r.result).replace(/^data:[^,]*,/, ""))
+    r.onerror = () => ko(r.error)
+    r.readAsDataURL(file)
+  })
+  phone.saveFile(name, file.type || "application/octet-stream", data)
+  return true
+}
 
 /** Indirizzo dell'APK sul server. */
 export const APK_URL = "/app/sapp.apk"

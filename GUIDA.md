@@ -191,14 +191,18 @@ Testi brevi e diretti, in italiano, con le virgolette «». Etichette di una o d
 
 ## 5. App Android (facoltativa)
 Quando serve qualcosa che il browser non fa (es. sveglie, widget), o come scelta in più accanto alla web app.
-Riferimenti: **SCalendar** (`android/`: sveglie, widget, sincronizzazione) e **SHealth** (`android/`: solo la pagina,
-con i file da allegare scelti col selettore di Android, i PDF aperti col telefono e i download in Download).
+Riferimenti: **SCalendar** (`android/`: sveglie, widget, sincronizzazione), **SHealth** (`android/`: solo la pagina,
+con i file da allegare scelti col selettore di Android, i PDF aperti col telefono e i download in Download) e
+**SGarage** (`android/`: come SHealth, più la fotocamera e i file fatti dalla pagina).
 - Kotlin + Jetpack Compose, minSdk 26, compilata solo dalle Actions (§7); stessa chiave di firma per sempre (in
   `android/signing/`), così ogni versione si installa sopra la precedente.
 - Accesso col telefono (`/api/device/login`, nome del telefono) → gettone salvato; la pagina dell'app gira in una
   **WebView** col gettone come cookie (LayoutParams `MATCH_PARENT`, altrimenti la pagina si taglia).
 - **Ponte** `window.<App>App` (`lib/phone.ts`): `openPhone()` apre la schermata nativa (in SCalendar `openAlarms`),
   `logout()`, `version()`, `updateApp()`.
+- **File**: il selettore di Android per gli `<input type="file">`; se accettano immagini c'è anche la **fotocamera**
+  (`ACTION_IMAGE_CAPTURE` tra le scelte, foto in cache passata con FileProvider). I file fatti dalla pagina (`blob:`)
+  si salvano col ponte `saveFile` (`saveInApp` di `lib/phone.ts`); gli indirizzi del server col DownloadManager.
 - **Indietro**: prima chiede alla pagina (`window.appBack()`, da `lib/overlays.ts`: chiude il pannello o la finestra
   aperti), poi la cronologia della WebView, e sulla prima vista l'app va in secondo piano (`moveTaskToBack`), non si
   chiude.

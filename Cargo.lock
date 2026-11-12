@@ -854,7 +854,7 @@ checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
 name = "sapp"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "axum",
  "sapp-app",
@@ -867,7 +867,7 @@ dependencies = [
 
 [[package]]
 name = "sapp-app"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "sapp-domain",
  "sapp-sqlite",
@@ -876,14 +876,14 @@ dependencies = [
 
 [[package]]
 name = "sapp-domain"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "chrono",
 ]
 
 [[package]]
 name = "sapp-http"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "async-stream",
  "axum",
@@ -900,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "sapp-sqlite"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "rusqlite",
  "sapp-app",
@@ -909,7 +909,7 @@ dependencies = [
 
 [[package]]
 name = "sapp-system"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "argon2",
  "base64",

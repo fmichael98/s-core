@@ -3,6 +3,10 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.6
+- `lib/phone.ts`: `saveInApp` (ponte `saveFile`) per salvare in Download i file fatti dalla pagina: nella WebView dell'app Android i link «blob:» non scaricano
+- GUIDA §5: fotocamera tra le scelte del selettore dei file e file della pagina salvati col ponte (SGarage come riferimento)
+
 ## 1.0.5
 - `lib/api.ts`: intestazione anti-CSRF scritta col nome breve (`x-sapp`): nelle app col nome breve diverso dal nome (SMonitor → servermon) pagina e server ora coincidono (prima ogni modifica era rifiutata)
 - `app/App.tsx`: «#settings» apre le Impostazioni anche con la pagina già aperta

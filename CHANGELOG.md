@@ -3,6 +3,10 @@
 Ogni versione: `## numero` e sotto le voci `- …` (sono pubbliche su `/api/changelog` e le pagine le mostrano dopo un
 aggiornamento).
 
+## 1.0.8
+- Avvisi mirati dal vivo: `Notifier::send(utenti, nome, dati)` manda un avviso con dati solo alle pagine di alcune persone; la pagina li riceve con `useLive(reload, { nome: … })` (da SNotes)
+- GUIDA: SNotes (porte, colore, differenze) e i pezzi facoltativi nuovi: «Da testare», dati offline a più mani (Yjs), colori dei fogli, dati dalla versione di prima
+
 ## 1.0.7
 - `install.sh`: `|| true` su ogni lettura del config (con `set -euo pipefail` una chiave mancante fermava lo script in silenzio: in SMonitor l'aggiornamento dalla 2.x tornava sempre indietro); le chiavi nuove si scrivono in cima e non dopo le tabelle, dove varrebbero per la tabella
 

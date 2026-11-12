@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { setOnline } from "@/lib/api"
 import { overlayOpen } from "@/lib/overlays"
@@ -28,8 +28,12 @@ function reloadForNewVersion(): void {
 
 /** Aggiornamento dal vivo: il server avvisa quando i dati cambiano (Server-Sent Events).
  *  Si riconnette da solo; non disturba chi sta scrivendo in una finestra; se il server riparte con una versione
- *  nuova la pagina si ricarica da sola. `reload` ricarica i dati di base prima di ridisegnare. */
-export function useLive(reload: () => Promise<void>): void {
+ *  nuova la pagina si ricarica da sola. `reload` ricarica i dati di base prima di ridisegnare.
+ *  `events`: avvisi con dati per questa pagina (es. «note»: una nota è cambiata), passati subito, anche con una
+ *  finestra aperta. */
+export function useLive(reload: () => Promise<void>, events?: Record<string, (data: string) => void>): void {
+  const handlers = useRef(events)
+  handlers.current = events
   useEffect(() => {
     let es: EventSource | null = null
     let timer: number | undefined
@@ -83,6 +87,7 @@ export function useLive(reload: () => Promise<void>): void {
         last = (e as MessageEvent<string>).data
         apply()
       })
+      for (const k of Object.keys(handlers.current ?? {})) src.addEventListener(k, (e) => handlers.current?.[k]?.((e as MessageEvent<string>).data))
       src.onerror = () => {
         setOnline(false)
         src.close()
